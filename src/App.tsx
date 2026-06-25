@@ -11,8 +11,8 @@ import AboutPage from '@/pages/AboutPage'
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route element={<RootLayout />}>
-        <Route path="/" element={<LandingPage />} />
         <Route path="/funds" element={<FundsPage />} />
         <Route path="/fund/:schemeCode" element={<FundDetailPage />} />
         <Route path="/indices" element={<IndicesPage />} />
