@@ -9,12 +9,12 @@ import {
 interface Row { label: string; key: keyof Quote; fmt?: (v: number) => string }
 
 const ROWS: Row[] = [
-  { label: 'Price',        key: 'price',     fmt: v => `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-  { label: 'Change %',    key: 'changePct',  fmt: v => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` },
-  { label: 'Market Cap',  key: 'marketCap',  fmt: v => `₹${(v / 1e7).toFixed(0)} Cr` },
-  { label: 'P/E',          key: 'pe',         fmt: v => v.toFixed(1) },
-  { label: 'Volume',       key: 'volume',     fmt: v => v.toLocaleString('en-IN') },
-  { label: 'Exchange',     key: 'exchange' },
+  { label: 'Price',       key: 'price',     fmt: v => `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+  { label: 'Change %',   key: 'changePct',  fmt: v => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` },
+  { label: 'Market Cap', key: 'marketCap',  fmt: v => `₹${(v / 1e7).toFixed(0)} Cr` },
+  { label: 'P/E',         key: 'pe',         fmt: v => v.toFixed(1) },
+  { label: 'Volume',      key: 'volume',     fmt: v => v.toLocaleString('en-IN') },
+  { label: 'Exchange',    key: 'exchange' },
 ]
 
 export default function ComparePage() {
@@ -23,10 +23,10 @@ export default function ComparePage() {
 
   if (isLoading) return (
     <div className="space-y-4">
-      <div className="h-5 w-20 bg-zinc-100 rounded animate-pulse" />
-      <div className="border border-border rounded-lg overflow-hidden animate-pulse">
+      <div className="h-5 w-20 bg-muted rounded animate-pulse" />
+      <div className="border border-border rounded-md overflow-hidden animate-pulse">
         {[...Array(7)].map((_, i) => (
-          <div key={i} className="h-10 border-b border-border last:border-0 bg-white" style={{ opacity: 1 - i * 0.1 }} />
+          <div key={i} className="h-10 border-b border-border last:border-0 bg-card" style={{ opacity: 1 - i * 0.1 }} />
         ))}
       </div>
     </div>
@@ -36,23 +36,23 @@ export default function ComparePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-base font-semibold text-foreground">Compare</h2>
+        <h2 className="text-[15px] font-semibold text-foreground">Compare</h2>
         <p className="text-xs text-muted-foreground">Click a symbol to view detail</p>
       </div>
-      <div className="border border-border rounded-lg overflow-x-auto bg-card">
+      <div className="border border-border rounded-md overflow-x-auto bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="w-32 font-medium text-foreground">Metric</TableHead>
+            <TableRow className="bg-muted hover:bg-muted">
+              <TableHead className="w-32 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Metric</TableHead>
               {data.map(q => (
                 <TableHead key={q.symbol} className="text-right min-w-32">
                   <button
                     onClick={() => navigate(`/symbol/${q.symbol}`)}
-                    className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer block ml-auto"
+                    className="font-mono text-[11px] font-semibold text-primary hover:underline cursor-pointer block ml-auto"
                   >
                     {q.symbol}
                   </button>
-                  <span className="block font-normal text-muted-foreground text-xs truncate max-w-32 ml-auto">
+                  <span className="block font-normal text-muted-foreground text-[11px] truncate max-w-32 ml-auto">
                     {q.name.split(' ').slice(0, 2).join(' ')}
                   </span>
                 </TableHead>
@@ -61,8 +61,8 @@ export default function ComparePage() {
           </TableHeader>
           <TableBody>
             {ROWS.map(row => (
-              <TableRow key={row.key} className="hover:bg-muted/20">
-                <TableCell className="text-sm text-muted-foreground font-medium">{row.label}</TableCell>
+              <TableRow key={row.key} className="hover:bg-muted/30">
+                <TableCell className="text-[13px] text-muted-foreground font-medium py-3">{row.label}</TableCell>
                 {data.map(q => {
                   const raw = q[row.key]
                   const display = row.fmt && typeof raw === 'number' ? row.fmt(raw) : String(raw)
@@ -72,9 +72,14 @@ export default function ComparePage() {
                   return (
                     <TableCell
                       key={q.symbol}
-                      className={`text-right tabular-nums text-sm ${
-                        pos ? 'text-green-700' : neg ? 'text-red-600' : 'text-foreground'
-                      }`}
+                      className="text-right tabular-nums text-[13px] font-mono py-3"
+                      style={{
+                        color: pos
+                          ? 'var(--delta-positive)'
+                          : neg
+                          ? 'var(--delta-negative)'
+                          : undefined,
+                      }}
                     >
                       {display}
                     </TableCell>

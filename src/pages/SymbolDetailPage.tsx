@@ -3,28 +3,44 @@ import { useSymbolDetail } from '@/hooks/useSymbolDetail'
 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-2 py-2.5 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm text-foreground tabular-nums text-right">{value}</span>
+    <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
+      <span className="text-[13px] text-muted-foreground">{label}</span>
+      <span className="text-[13px] font-medium text-foreground font-mono tabular-nums">{value}</span>
     </div>
   )
 }
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 max-w-2xl animate-pulse">
-      <div className="space-y-2">
-        <div className="h-8 w-40 bg-zinc-100 rounded" />
-        <div className="h-10 w-48 bg-zinc-100 rounded" />
+    <div className="space-y-5 max-w-2xl animate-pulse">
+      <div className="border border-border rounded-lg p-6 space-y-3 bg-card">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-36 bg-muted rounded" />
+          <div className="h-5 w-10 bg-muted rounded" />
+        </div>
+        <div className="h-4 w-48 bg-muted rounded" />
+        <div className="flex items-center gap-3 pt-1">
+          <div className="h-9 w-40 bg-muted rounded" />
+          <div className="h-6 w-32 bg-muted rounded-full" />
+        </div>
+        <div className="h-3 w-24 bg-muted rounded" />
       </div>
-      <div className="border border-border rounded-lg p-4 space-y-2">
-        <div className="h-3 w-32 bg-zinc-100 rounded" />
-        <div className="h-20 bg-zinc-100 rounded" />
+      <div className="border border-border rounded-lg p-4 space-y-2 bg-card">
+        <div className="h-3 w-32 bg-muted rounded" />
+        <div className="h-24 bg-muted rounded mt-2" />
       </div>
-      <div className="border border-border rounded-lg p-4 space-y-3">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="h-4 bg-zinc-100 rounded" style={{ width: `${60 + (i % 3) * 15}%` }} />
-        ))}
+      <div className="border border-border rounded-lg bg-card">
+        <div className="px-6 py-3 border-b border-border">
+          <div className="h-3 w-28 bg-muted rounded" />
+        </div>
+        <div className="px-6 divide-y divide-border">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="flex justify-between py-3">
+              <div className="h-4 w-24 bg-muted rounded" />
+              <div className="h-4 bg-muted rounded" style={{ width: `${48 + (i % 3) * 20}px` }} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -54,92 +70,94 @@ export default function SymbolDetailPage() {
   const minClose = Math.min(...closes)
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 flex-wrap mb-1">
-          <h2 className="text-2xl font-semibold text-foreground font-mono tracking-tight">
+    <div className="space-y-5 max-w-2xl">
+      {/* Symbol header card */}
+      <div className="border border-border rounded-lg p-6 bg-card space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="font-mono text-2xl font-bold text-foreground tracking-tight">
             {quote.symbol}
           </h2>
-          <span className="text-xs text-muted-foreground border border-border px-1.5 py-0.5 rounded font-mono">
+          <span className="font-mono text-[11px] font-medium text-muted-foreground border border-border px-2 py-0.5 rounded bg-muted">
             {quote.exchange}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground mb-3">{quote.name}</p>
-        <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-semibold text-foreground tabular-nums tracking-tight">
+        <p className="text-[13px] text-muted-foreground">{quote.name}</p>
+        <div className="flex items-center gap-3 pt-2 flex-wrap">
+          <span className="font-mono text-[30px] font-semibold text-foreground tabular-nums leading-none">
             ₹{quote.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className={`inline-flex items-center gap-1 text-sm tabular-nums font-medium px-2 py-0.5 rounded ${
-            pos ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-          }`}>
-            {pos ? '▲' : '▼'}
+          <span
+            className="inline-flex items-center font-mono text-[13px] font-medium tabular-nums px-2.5 py-1 rounded-full"
+            style={pos
+              ? { background: 'var(--delta-positive-bg)', color: 'var(--delta-positive)' }
+              : { background: 'var(--delta-negative-bg)', color: 'var(--delta-negative)' }
+            }
+          >
+            {pos ? '▲' : '▼'}{' '}
             {Math.abs(quote.change).toFixed(2)}{' '}
             ({pos ? '+' : ''}{quote.changePct.toFixed(2)}%)
           </span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1.5 tabular-nums">
+        <p className="font-mono text-[11px] pt-1" style={{ color: 'var(--subtle)' }}>
           Vol: {quote.volume.toLocaleString('en-IN')}
         </p>
       </div>
 
-      {/* EOD bar chart */}
+      {/* EOD chart */}
       <div className="border border-border rounded-lg p-4 bg-card">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            30-day Price (stub)
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+            30-Day Price
           </p>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+          <div className="flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
             <span>L ₹{minClose.toFixed(0)}</span>
             <span>H ₹{maxClose.toFixed(0)}</span>
           </div>
         </div>
-        <div className="flex items-end gap-px h-20">
+        <div className="flex items-end gap-px h-24">
           {eodBars.map(bar => {
             const range = maxClose - minClose || 1
-            const heightPct = Math.max(6, ((bar.close - minClose) / range) * 100)
+            const heightPct = Math.max(4, ((bar.close - minClose) / range) * 100)
             const isUp = bar.close >= bar.open
             return (
               <div
                 key={bar.date}
                 title={`${bar.date}  ₹${bar.close.toFixed(2)}`}
-                className={`flex-1 rounded-sm transition-opacity hover:opacity-75 cursor-default ${
-                  isUp ? 'bg-green-500' : 'bg-red-400'
-                }`}
-                style={{ height: `${heightPct}%` }}
+                className="flex-1 cursor-default transition-opacity hover:opacity-70"
+                style={{
+                  height: `${heightPct}%`,
+                  background: isUp ? 'var(--delta-positive)' : 'var(--delta-negative)',
+                  borderRadius: 0,
+                  minHeight: '2px',
+                }}
               />
             )
           })}
         </div>
-        <div className="flex justify-between mt-1.5">
-          <span className="text-xs text-muted-foreground tabular-nums">{eodBars[0]?.date}</span>
-          <span className="text-xs text-muted-foreground tabular-nums">{eodBars[eodBars.length - 1]?.date}</span>
+        <div className="h-px bg-border mt-1 mb-1.5" />
+        <div className="flex justify-between">
+          <span className="font-mono text-[10px]" style={{ color: 'var(--subtle)' }}>{eodBars[0]?.date}</span>
+          <span className="font-mono text-[10px]" style={{ color: 'var(--subtle)' }}>{eodBars[eodBars.length - 1]?.date}</span>
         </div>
       </div>
 
       {/* Fundamentals */}
       {fundamentals && (
         <div className="border border-border rounded-lg bg-card">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="px-6 py-3 border-b border-border">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
               Fundamentals
             </p>
           </div>
-          <div className="px-4 divide-y-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-              <div>
-                <StatRow label="P/E"           value={fundamentals.pe.toFixed(1)} />
-                <StatRow label="P/B"           value={fundamentals.pb.toFixed(2)} />
-                <StatRow label="EPS"           value={`₹${fundamentals.eps.toFixed(2)}`} />
-                <StatRow label="ROE"           value={`${fundamentals.roe.toFixed(1)}%`} />
-              </div>
-              <div>
-                <StatRow label="Debt / Equity" value={fundamentals.debtToEquity.toFixed(2)} />
-                <StatRow label="Div. Yield"    value={`${fundamentals.dividendYield.toFixed(2)}%`} />
-                <StatRow label="Sector"        value={fundamentals.sector} />
-                <StatRow label="Industry"      value={fundamentals.industry} />
-              </div>
-            </div>
+          <div className="px-6">
+            <StatRow label="P/E"           value={fundamentals.pe.toFixed(1)} />
+            <StatRow label="P/B"           value={fundamentals.pb.toFixed(2)} />
+            <StatRow label="EPS"           value={`₹${fundamentals.eps.toFixed(2)}`} />
+            <StatRow label="ROE"           value={`${fundamentals.roe.toFixed(1)}%`} />
+            <StatRow label="Debt / Equity" value={`${fundamentals.debtToEquity.toFixed(2)}×`} />
+            <StatRow label="Div. Yield"    value={`${fundamentals.dividendYield.toFixed(2)}%`} />
+            <StatRow label="Sector"        value={fundamentals.sector} />
+            <StatRow label="Industry"      value={fundamentals.industry} />
           </div>
         </div>
       )}
