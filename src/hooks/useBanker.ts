@@ -3,7 +3,7 @@ import type { EnrichedScheme } from '@/hooks/useFundList'
 import type { FundStats } from '@/api/dataTypes'
 import { fetchFundDetail } from '@/api/mfapiClient'
 import { computeStats } from '@/lib/fundStats'
-import { filterByProfile, scoreFund, type BankerRisk } from '@/lib/banker'
+import { filterByProfile, scoreFund, adjustScoreForProfile, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
 
 interface ScoredFund {
   scheme: EnrichedScheme
@@ -12,7 +12,7 @@ interface ScoredFund {
   status: 'pending' | 'loading' | 'ready' | 'error'
 }
 
-export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, topN = 12) {
+export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, investProfile: InvestmentProfile, topN = 12) {
   const [candidates, setCandidates] = useState<ScoredFund[]>([])
   const [isScanning, setIsScanning] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -64,15 +64,16 @@ export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, topN =
       try {
         const detail = await fetchFundDetail(final[i].schemeCode)
         const stats = computeStats(detail.data)
+        const baseScore = scoreFund(final[i], stats)
         setCandidates(prev => prev.map((c, j) =>
           j === i
-            ? { ...c, stats, score: scoreFund(c.scheme, stats), status: 'ready' as const }
+            ? { ...c, stats, score: adjustScoreForProfile(baseScore, c.scheme, investProfile), status: 'ready' as const }
             : c
         ))
       } catch {
         setCandidates(prev => prev.map((c, j) =>
           j === i
-            ? { ...c, stats: null, score: scoreFund(c.scheme, null), status: 'error' as const }
+            ? { ...c, stats: null, score: adjustScoreForProfile(scoreFund(c.scheme, null), c.scheme, investProfile), status: 'error' as const }
             : c
         ))
       }
@@ -81,7 +82,7 @@ export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, topN =
     }
 
     setIsScanning(false)
-  }, [schemes, profile, topN])
+  }, [schemes, profile, investProfile, topN])
 
   useEffect(() => {
     if (schemes.length > 0) scan()

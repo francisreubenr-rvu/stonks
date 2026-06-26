@@ -60,7 +60,7 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
           className="w-full h-8 bg-muted border border-border rounded-md px-2 text-[12px] text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="">All Houses</option>
-          {fundHouses.filter(h => h.length > 1).slice(0, 50).map(h => (
+          {fundHouses.filter(h => h.length > 1).map(h => (
             <option key={h} value={h}>{h}</option>
           ))}
         </select>
