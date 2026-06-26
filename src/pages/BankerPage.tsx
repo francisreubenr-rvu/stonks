@@ -56,10 +56,9 @@ export default function BankerPage() {
   const signOff = useMemo(() => oracleSignOff(), [])
 
   const { candidates, isScanning, progress, total } = useBanker(
-    schemes ?? [], riskProfile, investProfile, 10,
+    schemes ?? [], riskProfile, investProfile, Math.min(fundCount * 3, 18),
   )
 
-  // Don't block render — show questionnaire immediately
   const topPicks = candidates
     .sort((a, b) => b.score - a.score)
     .slice(0, fundCount)
