@@ -40,6 +40,30 @@ function std(arr: number[], avg: number): number {
   return Math.sqrt(variance)
 }
 
+export function computeYearlyReturns(data: NavPoint[]): { year: number; return: number }[] {
+  const byYear = new Map<number, NavPoint[]>()
+  for (const p of data) {
+    const [, , yyyy] = p.date.split('-')
+    const year = parseInt(yyyy)
+    if (isNaN(year)) continue
+    const entry = byYear.get(year)
+    if (!entry) byYear.set(year, [p])
+    else entry.push(p)
+  }
+
+  const results: { year: number; return: number }[] = []
+  for (const [year, points] of byYear) {
+    if (points.length < 2) continue
+    const firstNav = points[0].nav
+    const lastNav = points[points.length - 1].nav
+    if (firstNav <= 0) continue
+    results.push({ year, return: (lastNav - firstNav) / firstNav })
+  }
+
+  results.sort((a, b) => a.year - b.year)
+  return results
+}
+
 export function computeStats(data: NavPoint[]): FundStats {
   const n = data.length
   const currentNav = data[n - 1].nav

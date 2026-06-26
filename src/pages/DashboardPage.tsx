@@ -23,8 +23,15 @@ export default function DashboardPage() {
   if (error) return <p className="text-sm text-destructive">{error?.message}</p>
   if (!data) return null
 
+  const hasAllZeros = data.indices.length > 0 && data.indices.every(i => i.value === 0 && i.change === 0 && i.changePct === 0)
+
   return (
     <div className="space-y-6">
+      {hasAllZeros && (
+        <div className="px-4 py-2 rounded-lg border border-border bg-card text-[11px] text-muted-foreground">
+          📡 Using cached data — live feed temporarily unavailable
+        </div>
+      )}
       <div className="flex items-baseline justify-between">
         <h2 className="text-[15px] font-semibold text-foreground">Market Dashboard</h2>
         <p className="text-[11px] text-muted-foreground font-mono">

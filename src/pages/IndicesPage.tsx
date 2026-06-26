@@ -27,8 +27,15 @@ export default function IndicesPage() {
   )
   if (error) return <p className="text-sm text-destructive">{error?.message}</p>
 
+  const hasAllZeros = data && data.length > 0 && data.every(i => i.value === 0 && i.change === 0 && i.changePct === 0)
+
   return (
     <div className="space-y-4">
+      {hasAllZeros && (
+        <div className="px-4 py-2 rounded-lg border border-border bg-card text-[11px] text-muted-foreground">
+          📡 Using cached data — live feed temporarily unavailable
+        </div>
+      )}
       <h2 className="text-[15px] font-semibold text-foreground">Market Indices</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {data?.map(idx => {

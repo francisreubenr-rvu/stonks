@@ -50,7 +50,7 @@ function Shimmer() {
 }
 
 export default function FundsPage() {
-  const { data, isLoading, error } = useFundList()
+  const { data, isLoading, error, refetch } = useFundList()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
@@ -109,9 +109,15 @@ export default function FundsPage() {
 
   if (isLoading) return <Shimmer />
   if (error) return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <p className="text-sm text-destructive">{error?.message}</p>
       <p className="text-xs text-muted-foreground">Could not reach api.mfapi.in</p>
+      <button
+        onClick={() => refetch()}
+        className="px-4 py-2 rounded-lg border border-border text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200 cursor-pointer"
+      >
+        ↻ Retry
+      </button>
     </div>
   )
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import type { NavPoint } from '@/api/dataTypes'
 
 type Period = '1M' | '3M' | '6M' | '1Y' | '3Y' | 'Max'
@@ -43,7 +43,7 @@ interface Props {
   positive?: boolean
 }
 
-export default function NavChart({ data, positive }: Props) {
+function NavChart({ data, positive }: Props) {
   const [period, setPeriod] = useState<Period>('1Y')
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [animated, setAnimated] = useState(false)
@@ -269,3 +269,5 @@ export default function NavChart({ data, positive }: Props) {
     </div>
   )
 }
+
+export default React.memo(NavChart)

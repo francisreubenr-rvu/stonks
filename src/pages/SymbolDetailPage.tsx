@@ -64,11 +64,11 @@ export default function SymbolDetailPage() {
     </div>
   )
 
-  const { quote, fundamentals, eodBars } = queryData
+  const { quote, fundamentals, eodBars, isFallback } = queryData
   const pos = quote.change >= 0
   const closes = eodBars.map(b => b.close)
-  const maxClose = Math.max(...closes)
-  const minClose = Math.min(...closes)
+  const maxClose = closes.length > 0 ? Math.max(...closes) : 0
+  const minClose = closes.length > 0 ? Math.min(...closes) : 0
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -99,48 +99,57 @@ export default function SymbolDetailPage() {
             ({pos ? '+' : ''}{quote.changePct.toFixed(2)}%)
           </span>
         </div>
-        <p className="font-mono text-[11px] pt-1" style={{ color: 'var(--subtle)' }}>
-          Vol: {quote.volume.toLocaleString('en-IN')}
-        </p>
+        <div className="flex items-center gap-3 pt-1">
+          <p className="font-mono text-[11px]" style={{ color: 'var(--subtle)' }}>
+            Vol: {quote.volume.toLocaleString('en-IN')}
+          </p>
+          {isFallback && (
+            <span className="font-mono text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              using cached data
+            </span>
+          )}
+        </div>
       </div>
 
       {/* EOD chart */}
-      <div className="border border-border rounded-lg p-4 bg-card">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
-            30-Day Price
-          </p>
-          <div className="flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
-            <span>L ₹{minClose.toFixed(0)}</span>
-            <span>H ₹{maxClose.toFixed(0)}</span>
+      {eodBars.length > 0 && (
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+              30-Day Price
+            </p>
+            <div className="flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
+              <span>L ₹{minClose.toFixed(0)}</span>
+              <span>H ₹{maxClose.toFixed(0)}</span>
+            </div>
+          </div>
+          <div className="flex items-end gap-px h-24">
+            {eodBars.map(bar => {
+              const range = maxClose - minClose || 1
+              const heightPct = Math.max(4, ((bar.close - minClose) / range) * 100)
+              const isUp = bar.close >= bar.open
+              return (
+                <div
+                  key={bar.date}
+                  title={`${bar.date}  ₹${bar.close.toFixed(2)}`}
+                  className="flex-1 cursor-default transition-opacity hover:opacity-70"
+                  style={{
+                    height: `${heightPct}%`,
+                    background: isUp ? 'var(--delta-positive)' : 'var(--delta-negative)',
+                    borderRadius: 0,
+                    minHeight: '2px',
+                  }}
+                />
+              )
+            })}
+          </div>
+          <div className="h-px bg-border mt-1 mb-1.5" />
+          <div className="flex justify-between">
+            <span className="font-mono text-[10px]" style={{ color: 'var(--subtle)' }}>{eodBars[0]?.date}</span>
+            <span className="font-mono text-[10px]" style={{ color: 'var(--subtle)' }}>{eodBars[eodBars.length - 1]?.date}</span>
           </div>
         </div>
-        <div className="flex items-end gap-px h-24">
-          {eodBars.map(bar => {
-            const range = maxClose - minClose || 1
-            const heightPct = Math.max(4, ((bar.close - minClose) / range) * 100)
-            const isUp = bar.close >= bar.open
-            return (
-              <div
-                key={bar.date}
-                title={`${bar.date}  ₹${bar.close.toFixed(2)}`}
-                className="flex-1 cursor-default transition-opacity hover:opacity-70"
-                style={{
-                  height: `${heightPct}%`,
-                  background: isUp ? 'var(--delta-positive)' : 'var(--delta-negative)',
-                  borderRadius: 0,
-                  minHeight: '2px',
-                }}
-              />
-            )
-          })}
-        </div>
-        <div className="h-px bg-border mt-1 mb-1.5" />
-        <div className="flex justify-between">
-          <span className="font-mono text-[10px]" style={{ color: 'var(--subtle)' }}>{eodBars[0]?.date}</span>
-          <span className="font-mono text-[10px]" style={{ color: 'var(--subtle)' }}>{eodBars[eodBars.length - 1]?.date}</span>
-        </div>
-      </div>
+      )}
 
       {/* Fundamentals */}
       {fundamentals && (

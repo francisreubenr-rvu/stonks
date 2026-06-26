@@ -1,6 +1,10 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import React from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useFundDetail } from '@/hooks/useFundDetail'
 import { riskFromCategory } from '@/lib/riskFromCategory'
+import { computeYearlyReturns } from '@/lib/fundStats'
+import { fetchAllSchemes } from '@/api/mfapiClient'
 import NavChart from '@/components/NavChart'
 
 const RISK_STYLE: Record<string, React.CSSProperties> = {
@@ -86,6 +90,15 @@ function DrawdownBar({ value }: { value: number }) {
 }
 
 function WinRateRing({ winRate, pos, neg }: { winRate: number; pos: number; neg: number }) {
+  if (pos + neg === 0) {
+    return (
+      <div className="flex items-center gap-6">
+        <div className="w-20 h-20 shrink-0 flex items-center justify-center">
+          <span className="font-mono text-[12px] text-muted-foreground">No monthly data</span>
+        </div>
+      </div>
+    )
+  }
   const r = 32
   const circ = 2 * Math.PI * r
   const filled = winRate * circ
@@ -147,6 +160,11 @@ export default function FundDetailPage() {
   const { schemeCode } = useParams<{ schemeCode: string }>()
   const navigate = useNavigate()
   const { data: queryData, isLoading, error } = useFundDetail(schemeCode ?? '')
+  const { data: allSchemes } = useQuery({
+    queryKey: ['allSchemes'],
+    queryFn: fetchAllSchemes,
+    staleTime: 3_600_000,
+  })
 
   if (isLoading) return <LoadingSkeleton />
   if (error || !queryData) return (
@@ -364,6 +382,73 @@ export default function FundDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Yearly Returns */}
+      {(() => {
+        const yr = computeYearlyReturns(data)
+        if (yr.length < 2) return null
+        const last5 = yr.slice(-5)
+        const maxAbs = Math.max(...last5.map(y => Math.abs(y.return)), 0.01)
+        return (
+          <div className="border border-border rounded-lg bg-card">
+            <div className="px-5 py-3 border-b border-border">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Calendar Year Returns</p>
+            </div>
+            <div className="px-5 py-4 flex items-end gap-3" style={{ height: 140 }}>
+              {last5.map(({ year, return: ret }) => {
+                const isPos = ret >= 0
+                const barH = Math.max(4, (Math.abs(ret) / maxAbs) * 100)
+                return (
+                  <div key={year} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                    <span
+                      className="font-mono text-[11px] font-medium tabular-nums"
+                      style={{ color: isPos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
+                    >
+                      {ret >= 0 ? '+' : ''}{(ret * 100).toFixed(1)}%
+                    </span>
+                    <div
+                      className="w-full rounded-sm transition-[height] duration-700 ease-out"
+                      style={{
+                        height: `${barH}%`,
+                        background: isPos ? 'var(--delta-positive)' : 'var(--delta-negative)',
+                        opacity: 0.7,
+                      }}
+                    />
+                    <span className="text-[10px] text-muted-foreground">{year}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Peer Comparison */}
+      {allSchemes && allSchemes.length > 0 && (() => {
+        const category = meta.scheme_category
+        const peers = allSchemes
+          .filter(s => s.schemeCode !== meta.scheme_code && s.schemeName.toLowerCase().includes(category.toLowerCase()))
+          .slice(0, 5)
+        if (peers.length === 0) return null
+        return (
+          <div className="border border-border rounded-lg bg-card">
+            <div className="px-5 py-3 border-b border-border">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Top {peers.length} in {category}</p>
+            </div>
+            <div className="px-5 py-3 space-y-1.5">
+              {peers.map(p => (
+                <Link
+                  key={p.schemeCode}
+                  to={`/fund/${p.schemeCode}`}
+                  className="block text-[12px] text-muted-foreground hover:text-foreground transition-colors truncate"
+                >
+                  {p.schemeName}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

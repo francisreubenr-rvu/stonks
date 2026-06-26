@@ -1,12 +1,19 @@
 import type { MFScheme, MFDetail, NavPoint } from './dataTypes'
 
 const BASE = 'https://api.mfapi.in/mf'
+const FETCH_TIMEOUT = 15_000
 
 let schemeCache: MFScheme[] | null = null
 
+function abortableFetch(url: string, timeoutMs = FETCH_TIMEOUT): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
 export async function fetchAllSchemes(): Promise<MFScheme[]> {
   if (schemeCache) return schemeCache
-  const res = await fetch(BASE)
+  const res = await abortableFetch(BASE)
   if (!res.ok) throw new Error(`MFAPI list failed: ${res.status}`)
   const raw: Array<{ schemeCode: number; schemeName: string }> = await res.json()
   schemeCache = raw
@@ -14,7 +21,7 @@ export async function fetchAllSchemes(): Promise<MFScheme[]> {
 }
 
 export async function fetchFundDetail(schemeCode: number | string): Promise<MFDetail> {
-  const res = await fetch(`${BASE}/${schemeCode}`)
+  const res = await abortableFetch(`${BASE}/${schemeCode}`)
   if (!res.ok) throw new Error(`MFAPI detail failed: ${res.status}`)
   const raw = await res.json() as {
     meta: {

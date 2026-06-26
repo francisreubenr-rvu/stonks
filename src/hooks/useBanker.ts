@@ -28,17 +28,21 @@ interface ScoredFund {
   reasoning: string[]
 }
 
-export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfile: InvestmentProfile, scanCount = 15) {
+export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfile: InvestmentProfile, scanCount = 15, rescanKey = 0) {
   const [candidates, setCandidates] = useState<ScoredFund[]>([])
   const [isScanning, setIsScanning] = useState(false)
   const [progress, setProgress] = useState(0)
   const scanningRef = useRef(false)
+  const versionRef = useRef(0)
 
   const scan = useCallback(() => {
-    if (schemes.length === 0 || scanningRef.current) return
+    if (schemes.length === 0) return
     scanningRef.current = true
     setIsScanning(true)
     setProgress(0)
+
+    versionRef.current += 1
+    const version = versionRef.current
 
     const eligible = filterByProfile(schemes, profile)
     const byCategory = new Map<string, LightFund[]>()
@@ -63,6 +67,7 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
       const { score, reasoning } = buffettScore(s, null, investProfile)
       return { scheme: s, stats: null, score, reasoning }
     })
+    if (version !== versionRef.current) return
     setCandidates(initial)
     setProgress(5)
 
@@ -72,6 +77,7 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
 
       // Phase A: check cache for all candidates in parallel
       const cacheResults = await Promise.allSettled(codes.map(getCached))
+      if (version !== versionRef.current) return
       const cachedMap = new Map<number, FundStats>()
       const needFetch: number[] = []
 
@@ -85,6 +91,7 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
 
       // Update with cached stats
       if (cachedMap.size > 0) {
+        if (version !== versionRef.current) return
         setCandidates(prev => prev.map(c => {
           const s = cachedMap.get(c.scheme.c)
           if (s) {
@@ -97,13 +104,14 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
       setProgress(15)
 
       // Phase B: fetch missing in parallel batches
-      let completed = final.length - needFetch.length
       for (let i = 0; i < needFetch.length; i += BATCH_SIZE) {
+        if (version !== versionRef.current) return
         const batch = needFetch.slice(i, i + BATCH_SIZE)
 
         const results = await Promise.allSettled(
           batch.map(code => fetchAndCache(code))
         )
+        if (version !== versionRef.current) return
 
         const fetched = new Map<number, FundStats>()
         results.forEach((r, j) => {
@@ -121,10 +129,10 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
           }))
         }
 
-        completed += fetched.size
         setProgress(Math.round(15 + (i / needFetch.length) * 85))
       }
 
+      if (version !== versionRef.current) return
       setIsScanning(false)
       setProgress(100)
       scanningRef.current = false
@@ -132,8 +140,14 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
   }, [schemes, profile, investProfile, scanCount])
 
   useEffect(() => {
-    if (schemes.length > 0) scan()
-  }, [schemes, profile, scan])
+    if (schemes.length > 0) {
+      scanningRef.current = false
+      setIsScanning(false)
+      setCandidates([])
+      setProgress(0)
+      scan()
+    }
+  }, [schemes, profile, scan, rescanKey])
 
   return {
     candidates: candidates.slice(0, scanCount).sort((a, b) => b.score - a.score),

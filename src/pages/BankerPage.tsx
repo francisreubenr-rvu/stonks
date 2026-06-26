@@ -48,6 +48,7 @@ export default function BankerPage() {
   const [fundCount, setFundCount] = useState<number>(5)
   const [amount, setAmount] = useState<string>('50K-2L')
   const [frequency, setFrequency] = useState<string>('Monthly SIP')
+  const [rescanKey, setRescanKey] = useState(0)
 
   const quote = useMemo(() => oracleQuote(step === 'scan' ? 'patience' : 'value'), [step])
 
@@ -56,7 +57,7 @@ export default function BankerPage() {
   const signOff = useMemo(() => oracleSignOff(), [])
 
   const { candidates, isScanning, progress, total } = useBanker(
-    schemes ?? [], riskProfile, investProfile, Math.min(fundCount * 3, 18),
+    schemes ?? [], riskProfile, investProfile, Math.min(fundCount * 3, 18), rescanKey,
   )
 
   // topPicks is ALWAYS exactly fundCount items — enforced at every render
@@ -443,6 +444,17 @@ export default function BankerPage() {
           <p className="text-center text-[10px] text-muted-foreground pt-2">
             Algorithmic interpretation of Buffett's philosophy · Not financial advice
           </p>
+
+          {!isScanning && topPicks.length > 0 && (
+            <div className="text-center pt-1">
+              <button
+                onClick={() => setRescanKey(k => k + 1)}
+                className="px-6 py-2 rounded-lg border border-border text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200 cursor-pointer"
+              >
+                ↻ Re-scan
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

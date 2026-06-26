@@ -1,7 +1,7 @@
 [
-  {"symbol": "RELIANCE",  "name": "Reliance Industries Ltd",       "price": 2962.45, "change": 16.85, "changePct": 0.57, "volume": 4823000, "pe": 24.6},
-  {"symbol": "TCS",       "name": "Tata Consultancy Services Ltd", "price": 3834.70, "change": 22.25, "changePct": 0.58, "volume": 1934000, "pe": 29.1},
-  {"symbol": "HDFCBANK",  "name": "HDFC Bank Ltd",                 "price": 1681.55, "change": 2.65,  "changePct": 0.16, "volume": 7234000, "pe": 19.2},
-  {"symbol": "INFY",      "name": "Infosys Ltd",                   "price": 1551.30, "change": 8.10,  "changePct": 0.52, "volume": 6123000, "pe": 23.8},
-  {"symbol": "ICICIBANK", "name": "ICICI Bank Ltd",                "price": 1193.40, "change": 5.85,  "changePct": 0.49, "volume": 8923000, "pe": 17.9}
+  {"symbol": "RELIANCE",  "name": "Reliance Industries Ltd",       "price": 1286.55, "change": -8.20,  "changePct": -0.63, "volume": 5250000, "pe": 22.4, "marketCap": 17400000},
+  {"symbol": "TCS",       "name": "Tata Consultancy Services Ltd", "price": 3580.25, "change": 34.70,  "changePct": 0.98,  "volume": 1850000, "pe": 27.3, "marketCap": 12950000},
+  {"symbol": "HDFCBANK",  "name": "HDFC Bank Ltd",                 "price": 1745.80, "change": 12.35,  "changePct": 0.71,  "volume": 8100000, "pe": 19.8, "marketCap": 13280000},
+  {"symbol": "INFY",      "name": "Infosys Ltd",                   "price": 1528.90, "change": -15.40, "changePct": -1.00, "volume": 6840000, "pe": 22.6, "marketCap": 6350000},
+  {"symbol": "ICICIBANK", "name": "ICICI Bank Ltd",                "price": 1256.30, "change": 9.15,   "changePct": 0.73,  "volume": 9450000, "pe": 18.5, "marketCap": 8820000}
 ]
