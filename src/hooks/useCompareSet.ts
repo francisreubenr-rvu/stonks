@@ -1,19 +1,14 @@
-import { useEffect, useState } from 'react'
-import type { Quote } from '@/api/dataTypes'
-import { fetchMultipleQuotes } from '@/api/indianMarketClient'
+import { useQuery } from '@tanstack/react-query'
+import { fetchMultipleQuotes } from '@/api/yahooFinanceClient'
+import { NS } from '@/lib/symbols'
 
-const DEFAULT = ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK']
+export function useCompareSet(symbols: string[]) {
+  const yahooSymbols = symbols.map(s => `${s}${NS}`)
 
-interface State { data: Quote[]; isLoading: boolean; error: string | null }
-
-export function useCompareSet(symbols: string[] = DEFAULT) {
-  const [state, setState] = useState<State>({ data: [], isLoading: true, error: null })
-  const key = symbols.join(',')
-  useEffect(() => {
-    fetchMultipleQuotes(symbols)
-      .then(data => setState({ data, isLoading: false, error: null }))
-      .catch(e  => setState({ data: [], isLoading: false, error: String(e) }))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
-  return state
+  return useQuery({
+    queryKey: ['compare', ...symbols],
+    queryFn: () => fetchMultipleQuotes(yahooSymbols),
+    staleTime: 60_000,
+    enabled: symbols.length > 0,
+  })
 }

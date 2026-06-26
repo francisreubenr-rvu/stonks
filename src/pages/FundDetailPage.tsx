@@ -146,18 +146,19 @@ function LoadingSkeleton() {
 export default function FundDetailPage() {
   const { schemeCode } = useParams<{ schemeCode: string }>()
   const navigate = useNavigate()
-  const { detail, stats, isLoading, error } = useFundDetail(schemeCode ?? '')
+  const { data: queryData, isLoading, error } = useFundDetail(schemeCode ?? '')
 
   if (isLoading) return <LoadingSkeleton />
-  if (error || !detail || !stats) return (
+  if (error || !queryData) return (
     <div className="space-y-3">
-      <p className="text-sm text-destructive">{error ?? 'Fund not found'}</p>
+      <p className="text-sm text-destructive">{error?.message ?? 'Fund not found'}</p>
       <button onClick={() => navigate(-1)} className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer">
         ← Go back
       </button>
     </div>
   )
 
+  const { detail, stats } = queryData
   const { meta, data } = detail
   const risk = riskFromCategory(meta.scheme_category)
   const isPos = (stats.cagr1y ?? 0) >= 0

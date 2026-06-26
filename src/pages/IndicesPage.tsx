@@ -25,13 +25,13 @@ export default function IndicesPage() {
       </div>
     </div>
   )
-  if (error) return <p className="text-sm text-destructive">{error}</p>
+  if (error) return <p className="text-sm text-destructive">{error?.message}</p>
 
   return (
     <div className="space-y-4">
       <h2 className="text-[15px] font-semibold text-foreground">Market Indices</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {data.map(idx => {
+        {data?.map(idx => {
           const pos = idx.change >= 0
           return (
             <div

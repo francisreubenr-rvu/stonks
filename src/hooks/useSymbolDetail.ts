@@ -1,28 +1,22 @@
-import { useEffect, useState } from 'react'
-import type { Quote, Fundamentals, EodBar } from '@/api/dataTypes'
-import { fetchQuote } from '@/api/indianMarketClient'
-import { fetchFundamentals, fetchEodBars } from '@/api/eodhdClient'
-
-interface State {
-  quote: Quote | null
-  fundamentals: Fundamentals | null
-  eodBars: EodBar[]
-  isLoading: boolean
-  error: string | null
-}
-
-const INIT: State = { quote: null, fundamentals: null, eodBars: [], isLoading: true, error: null }
+import { useQuery } from '@tanstack/react-query'
+import { fetchQuote, fetchFundamentals, fetchEodBars } from '@/api/yahooFinanceClient'
+import { NS } from '@/lib/symbols'
 
 export function useSymbolDetail(symbol: string) {
-  const [state, setState] = useState<State>(INIT)
-  useEffect(() => {
-    if (!symbol) return
-    setState(INIT)
-    Promise.all([fetchQuote(symbol), fetchFundamentals(symbol), fetchEodBars(symbol, 30)])
-      .then(([quote, fundamentals, eodBars]) =>
-        setState({ quote, fundamentals, eodBars, isLoading: false, error: null })
-      )
-      .catch(e => setState(s => ({ ...s, isLoading: false, error: String(e) })))
-  }, [symbol])
-  return state
+  const cleanSymbol = symbol?.replace(/\..*$/, '') ?? ''
+  const yahooSymbol = cleanSymbol ? `${cleanSymbol}${NS}` : ''
+
+  return useQuery({
+    queryKey: ['symbolDetail', cleanSymbol],
+    queryFn: async () => {
+      const [quote, fundamentals, eodBars] = await Promise.all([
+        fetchQuote(yahooSymbol),
+        fetchFundamentals(yahooSymbol),
+        fetchEodBars(yahooSymbol, '1mo', '1d'),
+      ])
+      return { quote, fundamentals, eodBars }
+    },
+    enabled: !!cleanSymbol,
+    staleTime: 60_000,
+  })
 }

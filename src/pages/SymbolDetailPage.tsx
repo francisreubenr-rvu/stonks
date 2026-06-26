@@ -49,12 +49,12 @@ function LoadingSkeleton() {
 export default function SymbolDetailPage() {
   const { symbolId } = useParams<{ symbolId: string }>()
   const navigate = useNavigate()
-  const { quote, fundamentals, eodBars, isLoading, error } = useSymbolDetail(symbolId ?? '')
+  const { data: queryData, isLoading, error } = useSymbolDetail(symbolId ?? '')
 
   if (isLoading) return <LoadingSkeleton />
-  if (error || !quote) return (
+  if (error || !queryData) return (
     <div className="space-y-3">
-      <p className="text-sm text-destructive">{error ?? 'Symbol not found'}</p>
+      <p className="text-sm text-destructive">{error?.message ?? 'Symbol not found'}</p>
       <button
         onClick={() => navigate(-1)}
         className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer"
@@ -64,6 +64,7 @@ export default function SymbolDetailPage() {
     </div>
   )
 
+  const { quote, fundamentals, eodBars } = queryData
   const pos = quote.change >= 0
   const closes = eodBars.map(b => b.close)
   const maxClose = Math.max(...closes)

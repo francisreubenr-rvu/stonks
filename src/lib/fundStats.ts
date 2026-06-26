@@ -152,20 +152,14 @@ export function computeStats(data: NavPoint[]): FundStats {
   const worstMonth = monthlyReturns.length > 0 ? Math.min(...monthlyReturns) : 0
   const avgMonthlyReturn = monthlyReturns.length > 0 ? mean(monthlyReturns) : 0
 
-  // ── Rolling 1Y returns ────────────────────────────────────────────────────
+  // ── Rolling 1Y returns (two-pointer sliding window, O(n)) ──────────────
   const rolling1y: number[] = []
+  let left = 0
   for (let i = 0; i < n; i++) {
-    const target = new Date(parseNavDate(data[i].date).getTime() - 365 * 86_400_000)
-    // find nearest prior point
-    let prior: number | null = null
-    for (let j = i - 1; j >= 0; j--) {
-      if (parseNavDate(data[j].date) <= target) {
-        prior = data[j].nav
-        break
-      }
-    }
-    if (prior !== null && prior > 0) {
-      rolling1y.push(cagr(data[i].nav, prior, 1))
+    const target = parseNavDate(data[i].date).getTime() - 365 * 86_400_000
+    while (left < i && parseNavDate(data[left].date).getTime() < target) left++
+    if (left < i && data[left].nav > 0) {
+      rolling1y.push(cagr(data[i].nav, data[left].nav, 1))
     }
   }
 

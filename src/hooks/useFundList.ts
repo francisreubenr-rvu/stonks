@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { MFScheme } from '@/api/dataTypes'
 import { fetchAllSchemes } from '@/api/mfapiClient'
-
-interface State {
-  data: MFScheme[]
-  isLoading: boolean
-  error: string | null
-}
+import { cacheGet, cacheSet, cacheKey } from '@/lib/cache'
 
 export function useFundList() {
-  const [state, setState] = useState<State>({ data: [], isLoading: true, error: null })
-
-  useEffect(() => {
-    fetchAllSchemes()
-      .then(data => setState({ data, isLoading: false, error: null }))
-      .catch(e  => setState({ data: [], isLoading: false, error: String(e) }))
-  }, [])
-
-  return state
+  return useQuery({
+    queryKey: ['fundList'],
+    queryFn: async () => {
+      const cached = await cacheGet<MFScheme[]>(cacheKey(['schemes']))
+      if (cached) {
+        fetchAllSchemes().then(data => cacheSet(cacheKey(['schemes']), data, 3600000))
+        return cached
+      }
+      const data = await fetchAllSchemes()
+      cacheSet(cacheKey(['schemes']), data, 3600000)
+      return data
+    },
+    staleTime: 3600_000,
+  })
 }

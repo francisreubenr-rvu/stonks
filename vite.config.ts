@@ -9,4 +9,14 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  server: {
+    proxy: {
+      '/api/yahoo': {
+        target: 'https://query1.finance.yahoo.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/api\/yahoo/, ''),
+        headers: { Origin: 'https://finance.yahoo.com' },
+      },
+    },
+  },
 })

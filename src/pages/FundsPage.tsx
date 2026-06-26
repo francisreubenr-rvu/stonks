@@ -1,9 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFundList } from '@/hooks/useFundList'
+import { useDebounce } from '@/hooks/useDebounce'
 import { Input } from '@/components/ui/input'
+import { ScreenerFilters, type FundFilters } from '@/components/ScreenerFilters'
+import { riskFromCategory, type RiskLevel } from '@/lib/riskFromCategory'
 
 const PAGE_SIZE = 50
+
+function categoryPrefix(cat: string): string {
+  const parts = cat.split('/')
+  return parts[parts.length - 1].trim()
+}
 
 function Shimmer() {
   return (
@@ -22,7 +30,6 @@ function Shimmer() {
           </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground animate-pulse">Loading all Indian mutual funds…</p>
     </div>
   )
 }
@@ -32,13 +39,71 @@ export default function FundsPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
+  const [filters, setFilters] = useState<FundFilters>({
+    categories: [], riskLevels: [], minReturns1y: 0, minAum: 0, fundHouse: '',
+  })
+
+  const debouncedQuery = useDebounce(query, 200)
+  const schemes = data ?? []
+
+  // Reset page when query or filters change
+  useEffect(() => { setPage(0) }, [debouncedQuery, filters])
+
+  const uniqueCategories = useMemo(() => {
+    const set = new Set<string>()
+    schemes.forEach(s => {
+      const parts = s.schemeName.split(' — ')
+      if (parts.length >= 2) {
+        const cat = parts[parts.length - 1].trim()
+        if (cat && cat.length < 60) set.add(cat)
+      }
+    })
+    return Array.from(set).sort()
+  }, [schemes])
+
+  const fundHouses = useMemo(() => {
+    const set = new Set<string>()
+    schemes.forEach(s => {
+      const parts = s.schemeName.split(' — ')
+      if (parts.length >= 2) set.add(parts[0].trim())
+    })
+    return Array.from(set).sort()
+  }, [schemes])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    setPage(0)
-    if (!q) return data
-    return data.filter(f => f.schemeName.toLowerCase().includes(q))
-  }, [data, query])
+    let result = schemes
+
+    const q = debouncedQuery.toLowerCase()
+    if (q) {
+      result = result.filter(f => f.schemeName.toLowerCase().includes(q))
+    }
+
+    if (filters.categories.length > 0) {
+      result = result.filter(f => {
+        const parts = f.schemeName.split(' — ')
+        const cat = categoryPrefix(parts.pop() ?? '')
+        return filters.categories.some(c => cat.toLowerCase().includes(c.toLowerCase()))
+      })
+    }
+
+    if (filters.riskLevels.length > 0) {
+      result = result.filter(f => {
+        const parts = f.schemeName.split(' — ')
+        const cat = parts.pop() ?? ''
+        const risk = riskFromCategory(cat)
+        return filters.riskLevels.includes(risk)
+      })
+    }
+
+    if (filters.fundHouse) {
+      result = result.filter(f => {
+        const house = f.schemeName.split(' — ')[0]?.trim() ?? ''
+        return house.toLowerCase().includes(filters.fundHouse.toLowerCase())
+      })
+    }
+
+    return result
+  }, [schemes, debouncedQuery, filters])
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const pageData = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
@@ -46,8 +111,8 @@ export default function FundsPage() {
   if (isLoading) return <Shimmer />
   if (error) return (
     <div className="space-y-2">
-      <p className="text-sm text-destructive">{error}</p>
-      <p className="text-xs text-muted-foreground">Could not reach api.mfapi.in — check network connection.</p>
+      <p className="text-sm text-destructive">{error?.message}</p>
+      <p className="text-xs text-muted-foreground">Could not reach api.mfapi.in</p>
     </div>
   )
 
@@ -57,7 +122,7 @@ export default function FundsPage() {
         <div>
           <h2 className="text-[15px] font-semibold text-foreground">Mutual Funds</h2>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {filtered.length.toLocaleString()} of {data.length.toLocaleString()} schemes · Click any fund for full analysis
+            {filtered.length.toLocaleString()} of {data?.length.toLocaleString()} schemes
           </p>
         </div>
         <Input
@@ -68,40 +133,67 @@ export default function FundsPage() {
         />
       </div>
 
+      <ScreenerFilters
+        categories={uniqueCategories}
+        fundHouses={fundHouses}
+        onChange={setFilters}
+      />
+
       <div className="border border-border rounded-md overflow-hidden bg-card">
-        {/* Header */}
-        <div className="grid grid-cols-[48px_1fr] bg-muted border-b border-border px-4 py-2.5">
+        <div className="grid grid-cols-[48px_1fr_100px_80px] bg-muted border-b border-border px-4 py-2.5">
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">#</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Scheme Name</span>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Category</span>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Risk</span>
         </div>
 
         {pageData.length === 0 ? (
           <div className="py-12 text-center text-[13px] text-muted-foreground">
-            No funds match "{query}"
+            No funds match your criteria
           </div>
         ) : (
-          pageData.map((scheme, i) => (
-            <button
-              key={scheme.schemeCode}
-              onClick={() => navigate(`/fund/${scheme.schemeCode}`)}
-              className="grid grid-cols-[48px_1fr] w-full px-4 py-3 border-b border-border last:border-0 text-left hover:bg-muted/40 transition-colors duration-100 cursor-pointer group"
-            >
-              <span className="font-mono text-[11px] text-muted-foreground tabular-nums pt-0.5">
-                {(page * PAGE_SIZE + i + 1).toLocaleString()}
-              </span>
-              <span className="text-[13px] text-foreground group-hover:text-primary transition-colors duration-100 leading-snug">
-                {scheme.schemeName}
-              </span>
-            </button>
-          ))
+          pageData.map((scheme, i) => {
+            const cat = scheme.schemeName.split(' — ').pop()?.trim() ?? ''
+            const risk = riskFromCategory(cat)
+            const riskColors: Record<RiskLevel, { bg: string; fg: string }> = {
+              'Low':       { bg: 'var(--risk-low-bg)',   fg: 'var(--risk-low-fg)' },
+              'Moderate':  { bg: 'var(--risk-mod-bg)',   fg: 'var(--risk-mod-fg)' },
+              'High':      { bg: 'var(--risk-high-bg)',  fg: 'var(--risk-high-fg)' },
+              'Very High': { bg: 'var(--risk-vhigh-bg)', fg: 'var(--risk-vhigh-fg)' },
+            }
+            return (
+              <button
+                key={scheme.schemeCode}
+                onClick={() => navigate(`/fund/${scheme.schemeCode}`)}
+                className="grid grid-cols-[48px_1fr_100px_80px] w-full px-4 py-3 border-b border-border last:border-0 text-left hover:bg-muted/40 transition-colors duration-100 cursor-pointer group"
+              >
+                <span className="font-mono text-[11px] text-muted-foreground tabular-nums pt-0.5">
+                  {(page * PAGE_SIZE + i + 1).toLocaleString()}
+                </span>
+                <span className="text-[13px] text-foreground group-hover:text-primary transition-colors duration-100 leading-snug">
+                  {scheme.schemeName}
+                </span>
+                <span className="text-[10px] text-muted-foreground text-right truncate pt-0.5">
+                  {cat.length > 22 ? cat.slice(0, 22) + '…' : cat}
+                </span>
+                <span className="text-right">
+                  <span
+                    className="inline-block text-[9px] font-medium px-1.5 py-0.5 rounded-full"
+                    style={{ background: riskColors[risk].bg, color: riskColors[risk].fg }}
+                  >
+                    {risk}
+                  </span>
+                </span>
+              </button>
+            )
+          })
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-[11px] text-muted-foreground">
-            Page {page + 1} of {totalPages} · showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)}
+            Page {page + 1} of {totalPages}
           </p>
           <div className="flex items-center gap-1">
             <button
@@ -111,7 +203,6 @@ export default function FundsPage() {
             >
               ← Prev
             </button>
-            {/* Page number pills — show at most 5 around current */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const start = Math.max(0, Math.min(page - 2, totalPages - 5))
               const p2 = start + i

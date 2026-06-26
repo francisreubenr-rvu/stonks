@@ -18,17 +18,13 @@ export interface IndexQuote {
   changePct: number
 }
 
-export interface Fund {
-  schemeCode: string
-  schemeName: string
-  nav: number
-  navDate: string
-  category: string
-  aum: number
-  returns1y: number
-  returns3y: number
-  returns5y: number
-  riskRating: 'Low' | 'Moderate' | 'High' | 'Very High'
+export interface EodBar {
+  date: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
 }
 
 export interface Fundamentals {
@@ -42,15 +38,6 @@ export interface Fundamentals {
   marketCap: number
   sector: string
   industry: string
-}
-
-export interface EodBar {
-  date: string
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
 }
 
 // ── MFAPI types ───────────────────────────────────────────────────────────────
@@ -109,4 +96,64 @@ export interface FundStats {
   rolling1yMin: number | null
   rolling1yMax: number | null
   rolling1yAvg: number | null
+}
+
+// ── Dashboard types ───────────────────────────────────────────────────────────
+
+export interface MarketIndex {
+  symbol: string
+  name: string
+  value: number
+  change: number
+  changePct: number
+}
+
+export interface MarketMover {
+  symbol: string
+  name: string
+  price: number
+  changePct: number
+}
+
+export interface SectorPerformance {
+  name: string
+  changePct: number
+}
+
+export interface DashboardData {
+  indices: MarketIndex[]
+  gainers: MarketMover[]
+  losers: MarketMover[]
+  sectors: SectorPerformance[]
+  advanceDecline: { advances: number; declines: number; unchanged: number }
+  lastUpdated: string
+}
+
+// ── Watchlist types ────────────────────────────────────────────────────────────
+
+export interface WatchlistItem {
+  symbol: string
+  name: string
+  type: 'stock' | 'index' | 'fund'
+  addedAt: number
+}
+
+// ── Portfolio types ────────────────────────────────────────────────────────────
+
+export interface Holding {
+  symbol: string
+  name: string
+  quantity: number
+  buyPrice: number
+  buyDate: string
+}
+
+export interface PortfolioItem extends Holding {
+  currentPrice: number
+  currentValue: number
+  invested: number
+  pnl: number
+  pnlPct: number
+  dayChange: number
+  dayChangePct: number
 }
