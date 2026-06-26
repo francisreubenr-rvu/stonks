@@ -9,6 +9,7 @@ import ComparePage from '@/pages/ComparePage'
 import SymbolDetailPage from '@/pages/SymbolDetailPage'
 import WatchlistPage from '@/pages/WatchlistPage'
 import PortfolioPage from '@/pages/PortfolioPage'
+import BankerPage from '@/pages/BankerPage'
 import AboutPage from '@/pages/AboutPage'
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/symbol/:symbolId" element={<SymbolDetailPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
+        <Route path="/banker" element={<BankerPage />} />
         <Route path="/about" element={<AboutPage />} />
       </Route>
     </Routes>

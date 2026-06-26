@@ -8,6 +8,7 @@ const NAV = [
   { to: '/compare',   label: 'Compare',   end: false },
   { to: '/watchlist', label: 'Watchlist', end: false },
   { to: '/portfolio', label: 'Portfolio', end: false },
+  { to: '/banker',    label: 'Banker',    end: false },
   { to: '/about',     label: 'About',     end: false },
 ]
 
