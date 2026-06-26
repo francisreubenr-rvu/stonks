@@ -59,9 +59,11 @@ export default function BankerPage() {
     schemes ?? [], riskProfile, investProfile, Math.min(fundCount * 3, 18),
   )
 
+  // topPicks is ALWAYS exactly fundCount items — enforced at every render
   const topPicks = candidates
+    .slice() // defensive copy
     .sort((a, b) => b.score - a.score)
-    .slice(0, fundCount)
+    .slice(0, Math.min(fundCount, candidates.length))
 
   const { title, desc } = PROFILE_LABELS[riskProfile]
 

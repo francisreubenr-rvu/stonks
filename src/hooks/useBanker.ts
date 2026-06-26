@@ -136,7 +136,7 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
   }, [schemes, profile, scan])
 
   return {
-    candidates: candidates.sort((a, b) => b.score - a.score),
+    candidates: candidates.slice(0, scanCount).sort((a, b) => b.score - a.score),
     isScanning,
     progress,
     total: candidates.length,
