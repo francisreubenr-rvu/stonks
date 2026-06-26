@@ -57,8 +57,8 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div>
           <p className="text-[10px] text-muted-foreground mb-1.5">Category</p>
-          <div className="flex flex-wrap gap-1">
-            {categories.slice(0, 12).map(c => (
+          <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
+            {categories.map(c => (
               <button
                 key={c}
                 onClick={() => emit(toggle(cats, c, setCats))}
