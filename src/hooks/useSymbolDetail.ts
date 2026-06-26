@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchQuote, fetchFundamentals, fetchEodBars } from '@/api/yahooFinanceClient'
 import { NS } from '@/lib/symbols'
+import {
+  fetchQuoteWithFallback,
+  fetchFundamentalsWithFallback,
+  fetchEodBarsWithFallback,
+} from '@/api/backupClient'
 
 export function useSymbolDetail(symbol: string) {
   const cleanSymbol = symbol?.replace(/\..*$/, '') ?? ''
@@ -10,9 +14,9 @@ export function useSymbolDetail(symbol: string) {
     queryKey: ['symbolDetail', cleanSymbol],
     queryFn: async () => {
       const [quote, fundamentals, eodBars] = await Promise.all([
-        fetchQuote(yahooSymbol),
-        fetchFundamentals(yahooSymbol),
-        fetchEodBars(yahooSymbol, '1mo', '1d'),
+        fetchQuoteWithFallback(yahooSymbol),
+        fetchFundamentalsWithFallback(yahooSymbol),
+        fetchEodBarsWithFallback(yahooSymbol, '1mo', '1d'),
       ])
       return { quote, fundamentals, eodBars }
     },
