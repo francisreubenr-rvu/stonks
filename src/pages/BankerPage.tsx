@@ -56,12 +56,11 @@ export default function BankerPage() {
   const signOff = useMemo(() => oracleSignOff(), [])
 
   const { candidates, isScanning, progress, total } = useBanker(
-    schemes ?? [], riskProfile, investProfile, fundCount * 3,
+    schemes ?? [], riskProfile, investProfile, 10,
   )
 
   // Don't block render — show questionnaire immediately
   const topPicks = candidates
-    .filter(c => c.status === 'ready')
     .sort((a, b) => b.score - a.score)
     .slice(0, fundCount)
 
@@ -311,9 +310,9 @@ export default function BankerPage() {
             </div>
           )}
 
-          {/* Principles sidebar */}
-          {!isScanning && topPicks.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-5">
+          {/* Show results as soon as they appear */}
+          {topPicks.length > 0 && (
+            <div className={isScanning ? 'opacity-90' : ''}>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <p className="text-[13px] font-semibold text-foreground">
