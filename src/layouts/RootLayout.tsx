@@ -13,13 +13,22 @@ const NAV = [
 
 export default function RootLayout() {
   return (
-    <div className="min-h-dvh bg-background flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-card">
+    <div className="min-h-dvh bg-background flex flex-col" style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
+      <header
+        className="sticky top-0 z-10 border-b backdrop-blur-xl"
+        style={{
+          background: 'rgba(10,14,23,0.85)',
+          borderColor: 'rgba(255,255,255,0.06)',
+        }}
+      >
         <div className="max-w-[1200px] mx-auto px-6 flex items-center h-12 gap-3">
-          <NavLink to="/dashboard" className="flex items-center pr-4 border-r border-border shrink-0">
-            <span className="text-sm font-semibold text-foreground tracking-tight select-none">
-              stonks
-            </span>
+          <NavLink to="/dashboard" className="flex items-center pr-4 shrink-0"
+            style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-2">
+              <span className="relative w-2 h-2 rounded-full bg-primary"
+                style={{ boxShadow: '0 0 8px #34D399' }} />
+              <span className="text-sm font-bold text-foreground tracking-tight select-none">stonks</span>
+            </div>
           </NavLink>
           <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto">
             {NAV.map(({ to, label, end }) => (
@@ -28,10 +37,10 @@ export default function RootLayout() {
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  `relative shrink-0 flex items-center px-2.5 py-1 text-[12px] font-medium transition-colors duration-150 ${
+                  `relative shrink-0 flex items-center px-3 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ${
                     isActive
-                      ? 'text-foreground after:absolute after:bottom-0 after:inset-x-2 after:h-0.5 after:bg-primary after:rounded-t-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                   }`
                 }
               >
@@ -47,7 +56,7 @@ export default function RootLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-border py-4">
+      <footer className="border-t py-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <p className="text-center text-xs text-muted-foreground">
           Personal research only · Data may be delayed · Not financial advice
         </p>
