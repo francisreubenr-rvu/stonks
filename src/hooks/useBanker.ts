@@ -3,12 +3,15 @@ import type { EnrichedScheme } from '@/hooks/useFundList'
 import type { FundStats } from '@/api/dataTypes'
 import { fetchFundDetail } from '@/api/mfapiClient'
 import { computeStats } from '@/lib/fundStats'
-import { filterByProfile, scoreFund, adjustScoreForProfile, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
+import { filterByProfile, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
+import { buffettScore } from '@/lib/buffett'
 
 interface ScoredFund {
   scheme: EnrichedScheme
   stats: FundStats | null
   score: number
+  buffettScore: number
+  reasoning: string[]
   status: 'pending' | 'loading' | 'ready' | 'error'
 }
 
@@ -51,11 +54,11 @@ export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, invest
 
     // Initialize scored list
     const initial: ScoredFund[] = final.map(s => ({
-      scheme: s, stats: null, score: 50, status: 'pending',
+      scheme: s, stats: null, score: 50, buffettScore: 50, reasoning: [], status: 'pending',
     }))
     setCandidates(initial)
 
-    // Fetch stats one by one to avoid overwhelming the API
+    // Fetch stats one by one
     for (let i = 0; i < final.length; i++) {
       setCandidates(prev => prev.map((c, j) =>
         j === i ? { ...c, status: 'loading' as const } : c
@@ -64,16 +67,17 @@ export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, invest
       try {
         const detail = await fetchFundDetail(final[i].schemeCode)
         const stats = computeStats(detail.data)
-        const baseScore = scoreFund(final[i], stats)
+        const { score: bs, reasoning } = buffettScore(final[i], stats, investProfile)
         setCandidates(prev => prev.map((c, j) =>
           j === i
-            ? { ...c, stats, score: adjustScoreForProfile(baseScore, c.scheme, investProfile), status: 'ready' as const }
+            ? { ...c, stats, score: bs, buffettScore: bs, reasoning, status: 'ready' as const }
             : c
         ))
       } catch {
+        const { score: bs, reasoning } = buffettScore(final[i], null, investProfile)
         setCandidates(prev => prev.map((c, j) =>
           j === i
-            ? { ...c, stats: null, score: adjustScoreForProfile(scoreFund(c.scheme, null), c.scheme, investProfile), status: 'error' as const }
+            ? { ...c, stats: null, score: bs, buffettScore: bs, reasoning, status: 'error' as const }
             : c
         ))
       }
