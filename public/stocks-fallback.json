@@ -1,0 +1,7 @@
+[
+  {"symbol": "RELIANCE",  "name": "Reliance Industries Ltd",       "price": 2962.45, "change": 16.85, "changePct": 0.57, "volume": 4823000, "pe": 24.6},
+  {"symbol": "TCS",       "name": "Tata Consultancy Services Ltd", "price": 3834.70, "change": 22.25, "changePct": 0.58, "volume": 1934000, "pe": 29.1},
+  {"symbol": "HDFCBANK",  "name": "HDFC Bank Ltd",                 "price": 1681.55, "change": 2.65,  "changePct": 0.16, "volume": 7234000, "pe": 19.2},
+  {"symbol": "INFY",      "name": "Infosys Ltd",                   "price": 1551.30, "change": 8.10,  "changePct": 0.52, "volume": 6123000, "pe": 23.8},
+  {"symbol": "ICICIBANK", "name": "ICICI Bank Ltd",                "price": 1193.40, "change": 5.85,  "changePct": 0.49, "volume": 8923000, "pe": 17.9}
+]

@@ -1,0 +1,11 @@
+[
+  {"symbol": "NIFTY 50",           "name": "Nifty 50",            "value": 25017.75, "change": 126.40, "changePct": 0.51},
+  {"symbol": "SENSEX",             "name": "BSE Sensex",          "value": 82157.40, "change": 392.55, "changePct": 0.48},
+  {"symbol": "NIFTY BANK",         "name": "Nifty Bank",          "value": 52489.30, "change": 89.30,  "changePct": 0.17},
+  {"symbol": "NIFTY IT",           "name": "Nifty IT",            "value": 38278.60, "change": -145.80,"changePct": -0.38},
+  {"symbol": "NIFTY MIDCAP 100",   "name": "Nifty Midcap 100",   "value": 56123.45, "change": 234.15, "changePct": 0.42},
+  {"symbol": "NIFTY SMALLCAP 100", "name": "Nifty Smallcap 100", "value": 19123.80, "change": 178.30, "changePct": 0.94},
+  {"symbol": "NIFTY PHARMA",       "name": "Nifty Pharma",        "value": 21890.55, "change": 112.75, "changePct": 0.52},
+  {"symbol": "NIFTY AUTO",         "name": "Nifty Auto",          "value": 23678.30, "change": -56.20, "changePct": -0.24},
+  {"symbol": "NIFTY FMCG",         "name": "Nifty FMCG",         "value": 58123.90, "change": 198.45, "changePct": 0.34}
+]

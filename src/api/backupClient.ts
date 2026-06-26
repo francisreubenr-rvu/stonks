@@ -37,5 +37,17 @@ export async function fetchEodBarsWithFallback(symbol: string, range = '1mo', in
 }
 
 export async function fetchMultipleWithFallback(symbols: string[]): Promise<Quote[]> {
-  return withRetry(() => yahooMultiple(symbols)).catch(() => [])
+  try {
+    return await withRetry(() => yahooMultiple(symbols))
+  } catch {
+    // Fall back to static data for known symbols
+    try {
+      const res = await fetch('./stocks-fallback.json')
+      if (res.ok) {
+        const allFallback: Quote[] = await res.json()
+        return allFallback.filter(q => symbols.includes(q.symbol))
+      }
+    } catch {}
+    return []
+  }
 }

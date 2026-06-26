@@ -144,9 +144,10 @@ export async function fetchIndexQuote(symbol: string): Promise<{ value: number; 
       interval: '1d',
     })
     const meta = data.chart?.result?.[0]?.meta
-    if (!meta) return null
-    const change = meta.regularMarketPrice - meta.previousClose
-    const changePct = meta.previousClose > 0 ? (change / meta.previousClose) * 100 : 0
+    if (!meta || !isFinite(meta.regularMarketPrice)) return null
+    const previousClose = isFinite(meta.previousClose) ? meta.previousClose : meta.regularMarketPrice
+    const change = meta.regularMarketPrice - previousClose
+    const changePct = previousClose > 0 ? (change / previousClose) * 100 : 0
     return {
       value: meta.regularMarketPrice,
       change,
