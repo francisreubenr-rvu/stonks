@@ -1,7 +1,7 @@
 import type { Quote, EodBar, Fundamentals } from './dataTypes'
 
 const DEV_BASE = '/api/yahoo'
-const PROD_BASE = 'https://stonks-proxy.francisreubenr-rvu.workers.dev'
+const PROD_BASE = 'https://stonks-proxy.francisreubenrbtech25.workers.dev'
 
 const BASE = import.meta.env.DEV ? DEV_BASE : PROD_BASE
 
