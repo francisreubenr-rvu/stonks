@@ -5,26 +5,25 @@ import { cacheGet, cacheSet, cacheKey } from '@/lib/cache'
 
 export type RiskLevel = 'Low' | 'Moderate' | 'High' | 'Very High'
 
-// Extract category keywords from fund name (NOT from plan type suffix)
 const CATEGORY_PATTERNS: Array<[RegExp, string]> = [
-  [/Large\s*Cap/, 'Large Cap'], [/Mid\s*Cap/, 'Mid Cap'], [/Small\s*Cap/, 'Small Cap'],
-  [/Flexi\s*Cap/, 'Flexi Cap'], [/Multi\s*Cap/, 'Multi Cap'],
+  [/Large\s*Cap/i, 'Large Cap'], [/Mid\s*Cap/i, 'Mid Cap'], [/Small\s*Cap/i, 'Small Cap'],
+  [/Flexi\s*Cap/i, 'Flexi Cap'], [/Multi\s*Cap/i, 'Multi Cap'],
   [/Large\s*&?\s*Mid/i, 'Large & Mid'], [/ELSS/i, 'ELSS'],
-  [/Index\s*Fund/, 'Index Fund'], [/ETF/, 'ETF'],
-  [/Sectoral|Thematic|Technology|Pharma|Infrastructure|Banking|Energy|Consumption|MNC|Dividend Yield/, 'Sectoral/Thematic'],
-  [/International|Global|US|Nasdaq|S&P/, 'International'],
-  [/Liquid/, 'Liquid'], [/Overnight/, 'Overnight'], [/Ultra\s*Short/, 'Ultra Short'],
-  [/Money\s*Market/, 'Money Market'], [/Low\s*Duration/, 'Low Duration'],
-  [/Short\s*Duration/, 'Short Duration'], [/Corporate\s*Bond/, 'Corporate Bond'],
-  [/Gilt/, 'Gilt'], [/Credit\s*Risk/, 'Credit Risk'],
-  [/Floater/, 'Floater'], [/Banking\s*and\s*PSU/, 'Banking and PSU'],
-  [/Medium\s*Duration/, 'Medium Duration'], [/Long\s*Duration/, 'Long Duration'],
-  [/Dynamic\s*Bond/, 'Dynamic Bond'], [/Conservative\s*Hybrid/, 'Conservative Hybrid'],
-  [/Aggressive\s*Hybrid/, 'Aggressive Hybrid'], [/Equity\s*Savings/, 'Equity Savings'],
-  [/Balanced\s*Hybrid/, 'Balanced Hybrid'], [/Multi\s*Asset/, 'Multi Asset'],
-  [/Arbitrage/, 'Arbitrage'], [/Contra/, 'Contra'],
-  [/Value/, 'Value'], [/Dividend\s*Yield/, 'Dividend Yield'],
-  [/Focused/, 'Focused'], [/FOF|Fund\s*of\s*Fund/, 'FoF'],
+  [/Index\s*Fund/i, 'Index Fund'], [/ETF/i, 'ETF'],
+  [/Sectoral|Thematic|Technology|Pharma|Infrastructure|Banking|Energy|Consumption|MNC|Dividend Yield/i, 'Sectoral/Thematic'],
+  [/International|Global|US|Nasdaq|S&P/i, 'International'],
+  [/Liquid/i, 'Liquid'], [/Overnight/i, 'Overnight'], [/Ultra\s*Short/i, 'Ultra Short'],
+  [/Money\s*Market/i, 'Money Market'], [/Low\s*Duration/i, 'Low Duration'],
+  [/Short\s*Duration/i, 'Short Duration'], [/Corporate\s*Bond/i, 'Corporate Bond'],
+  [/Gilt/i, 'Gilt'], [/Credit\s*Risk/i, 'Credit Risk'],
+  [/Floater/i, 'Floater'], [/Banking\s*and\s*PSU/i, 'Banking and PSU'],
+  [/Medium\s*Duration/i, 'Medium Duration'], [/Long\s*Duration/i, 'Long Duration'],
+  [/Dynamic\s*Bond/i, 'Dynamic Bond'], [/Conservative\s*Hybrid/i, 'Conservative Hybrid'],
+  [/Aggressive\s*Hybrid/i, 'Aggressive Hybrid'], [/Equity\s*Savings/i, 'Equity Savings'],
+  [/Balanced\s*Hybrid/i, 'Balanced Hybrid'], [/Multi\s*Asset/i, 'Multi Asset'],
+  [/Arbitrage/i, 'Arbitrage'], [/Contra/i, 'Contra'],
+  [/Value/i, 'Value'], [/Dividend\s*Yield/i, 'Dividend Yield'],
+  [/Focused/i, 'Focused'], [/FOF|Fund\s*of\s*Fund/i, 'FoF'],
 ]
 
 function extractCategory(fundName: string): string {
@@ -44,40 +43,53 @@ function classifyRisk(category: string): RiskLevel {
   return 'Moderate'
 }
 
+function extractFundHouse(fundName: string): string {
+  const words = fundName.split(' ')
+  if (words.length === 1) return words[0]
+  if (words.length === 2) return words[0]
+  // Try 3 words for houses like "ICICI Prudential", "Nippon India", etc.
+  const threeWord = words.slice(0, 3).join(' ')
+  for (const prefix of [threeWord, words.slice(0, 2).join(' ')]) {
+    if (/^\w[\w\s&]+(?!Fund|Cap|Index|Bond|Gilt|Liquid|ETF|Plan)/i.test(prefix)) {
+      return prefix
+    }
+  }
+  return words[0]
+}
+
 export interface EnrichedScheme extends MFScheme {
   category: string
   risk: RiskLevel
   fundHouse: string
 }
 
+function enrich(raw: MFScheme[]): EnrichedScheme[] {
+  return raw.map(s => {
+    const parts = s.schemeName.split(' — ')
+    const fundName = parts[0].trim()
+    const cat = extractCategory(fundName)
+    return {
+      ...s,
+      category: cat,
+      risk: classifyRisk(cat),
+      fundHouse: extractFundHouse(fundName),
+    }
+  })
+}
+
 export function useFundList() {
   return useQuery<EnrichedScheme[]>({
     queryKey: ['fundList'],
+    staleTime: Infinity,
+    gcTime: Infinity,
     queryFn: async () => {
       const cached = await cacheGet<EnrichedScheme[]>(cacheKey(['schemes', 'v2']))
-      if (cached) {
-        // async refresh in background
-        fetchAllSchemes().then(raw => {
-          const enriched = raw.map(s => {
-            const parts = s.schemeName.split(' — ')
-            const fundName = parts[0].trim()
-            const cat = extractCategory(fundName)
-            return { ...s, category: cat, risk: classifyRisk(cat), fundHouse: parts[0].split(' ').slice(0, 2).join(' ') }
-          })
-          cacheSet(cacheKey(['schemes', 'v2']), enriched, 86400000)
-        })
-        return cached
-      }
+      if (cached) return cached
       const raw = await fetchAllSchemes()
-      const enriched: EnrichedScheme[] = raw.map(s => {
-        const parts = s.schemeName.split(' — ')
-        const fundName = parts[0].trim()
-        const cat = extractCategory(fundName)
-        return { ...s, category: cat, risk: classifyRisk(cat), fundHouse: parts[0].split(' ').slice(0, 2).join(' ') }
-      })
+      const enriched = enrich(raw)
       cacheSet(cacheKey(['schemes', 'v2']), enriched, 86400000)
       return enriched
     },
-    staleTime: 3600_000,
+    placeholderData: (prev) => prev,
   })
 }

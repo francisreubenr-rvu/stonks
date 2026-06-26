@@ -3,9 +3,9 @@ import { useState } from 'react'
 export interface FundFilters {
   categories: string[]
   riskLevels: string[]
+  fundHouse: string
   minReturns1y: number
   minAum: number
-  fundHouse: string
 }
 
 interface Props {
@@ -17,19 +17,15 @@ interface Props {
 export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
   const [cats, setCats] = useState<string[]>([])
   const [risks, setRisks] = useState<string[]>([])
-  const [minRet, setMinRet] = useState(0)
-  const [minAum, setMinAum] = useState(0)
   const [house, setHouse] = useState('')
 
   function emit(
     c: string[] = cats,
     r: string[] = risks,
-    ret: number = minRet,
-    aum: number = minAum,
     h: string = house,
   ) {
-    setCats(c); setRisks(r); setMinRet(ret); setMinAum(aum); setHouse(h)
-    onChange({ categories: c, riskLevels: r, minReturns1y: ret, minAum: aum, fundHouse: h })
+    setCats(c); setRisks(r); setHouse(h)
+    onChange({ categories: c, riskLevels: r, fundHouse: h, minReturns1y: 0, minAum: 0 })
   }
 
   const toggle = (list: string[], item: string, setter: (v: string[]) => void) => {
@@ -38,101 +34,78 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
     return next
   }
 
-  const hasFilters = cats.length > 0 || risks.length > 0 || minRet > 0 || minAum > 0 || house !== ''
+  const hasFilters = cats.length > 0 || risks.length > 0 || house !== ''
 
   return (
-    <div className="border border-border rounded-md p-3 bg-card space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Filters</p>
+        <p className="text-[11px] font-semibold text-foreground">Filters</p>
         {hasFilters && (
           <button
-            onClick={() => emit([], [], 0, 0, '')}
+            onClick={() => emit([], [], '')}
             className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
           >
-            Clear all
+            Clear
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div>
-          <p className="text-[10px] text-muted-foreground mb-1.5">Category</p>
-          <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
-            {categories.map(c => (
-              <button
-                key={c}
-                onClick={() => emit(toggle(cats, c, setCats))}
-                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
-                  cats.includes(c)
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div>
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Fund House
+        </p>
+        <select
+          value={house}
+          onChange={e => emit(undefined, undefined, e.target.value)}
+          className="w-full h-8 bg-muted border border-border rounded-md px-2 text-[12px] text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="">All Houses</option>
+          {fundHouses.filter(h => h.length > 1).slice(0, 50).map(h => (
+            <option key={h} value={h}>{h}</option>
+          ))}
+        </select>
+      </div>
 
-        <div>
-          <p className="text-[10px] text-muted-foreground mb-1.5">Risk</p>
-          <div className="flex flex-wrap gap-1">
-            {['Low', 'Moderate', 'High', 'Very High'].map(r => (
-              <button
-                key={r}
-                onClick={() => emit(undefined, toggle(risks, r, setRisks))}
-                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
-                  risks.includes(r)
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-[10px] text-muted-foreground mb-1.5">Min 1Y Return</p>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={minRet}
-            onChange={e => emit(undefined, undefined, Number(e.target.value))}
-            className="w-full h-1.5 accent-primary cursor-pointer"
-          />
-          <p className="text-[10px] text-muted-foreground mt-0.5">{minRet}%+</p>
-        </div>
-
-        <div>
-          <p className="text-[10px] text-muted-foreground mb-1.5">Min AUM (Cr)</p>
-          <input
-            type="range"
-            min={0}
-            max={100000}
-            step={100}
-            value={minAum}
-            onChange={e => emit(undefined, undefined, undefined, Number(e.target.value))}
-            className="w-full h-1.5 accent-primary cursor-pointer"
-          />
-          <p className="text-[10px] text-muted-foreground mt-0.5">₹{minAum.toLocaleString()}+ Cr</p>
+      <div>
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Risk Level
+        </p>
+        <div className="flex flex-col gap-1.5">
+          {(['Low', 'Moderate', 'High', 'Very High'] as const).map(r => (
+            <button
+              key={r}
+              onClick={() => emit(undefined, toggle(risks, r, setRisks))}
+              className={`text-left text-[11px] px-2.5 py-1.5 rounded-md border transition-all duration-150 cursor-pointer ${
+                risks.includes(r)
+                  ? 'bg-primary/15 border-primary/40 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
+              }`}
+            >
+              {r}
+            </button>
+          ))}
         </div>
       </div>
 
       <div>
-        <p className="text-[10px] text-muted-foreground mb-1.5">Fund House</p>
-        <select
-          value={house}
-          onChange={e => emit(undefined, undefined, undefined, undefined, e.target.value)}
-          className="h-7 bg-muted border border-border rounded px-2 text-[11px] text-foreground cursor-pointer w-full max-w-48"
-        >
-          <option value="">All fund houses</option>
-          {fundHouses.map(h => (
-            <option key={h} value={h}>{h}</option>
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Category
+        </p>
+        <div className="flex flex-col gap-1 max-h-[50vh] overflow-y-auto">
+          {categories.map(c => (
+            <button
+              key={c}
+              onClick={() => emit(toggle(cats, c, setCats))}
+              className={`text-left text-[11px] px-2.5 py-1.5 rounded-md border transition-all duration-150 cursor-pointer ${
+                cats.includes(c)
+                  ? 'bg-primary/15 border-primary/40 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
+              }`}
+            >
+              {c}
+            </button>
           ))}
-        </select>
+        </div>
       </div>
     </div>
   )
