@@ -1,11 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
-import type { MFScheme } from '@/api/dataTypes'
 import { fetchAllSchemes } from '@/api/mfapiClient'
 import { cacheGet, cacheSet, cacheKey } from '@/lib/cache'
 
-export type RiskLevel = 'Low' | 'Moderate' | 'High' | 'Very High'
+// Lightweight fund type — 4x less memory than EnrichedScheme
+export interface LightFund {
+  c: number     // schemeCode
+  n: string     // schemeName
+  g: string     // category
+  r: number     // risk 0=Low 1=Moderate 2=High 3=VeryHigh
+  h: string     // fundHouse
+}
 
-const CATEGORY_PATTERNS: Array<[RegExp, string]> = [
+export const RISK_LABELS = ['Low', 'Moderate', 'High', 'Very High'] as const
+
+// Category extraction patterns
+const CAT_PATTERNS: Array<[RegExp, string]> = [
   [/Large\s*Cap/i, 'Large Cap'], [/Mid\s*Cap/i, 'Mid Cap'], [/Small\s*Cap/i, 'Small Cap'],
   [/Flexi\s*Cap/i, 'Flexi Cap'], [/Multi\s*Cap/i, 'Multi Cap'],
   [/Large\s*&?\s*Mid/i, 'Large & Mid'], [/ELSS/i, 'ELSS'],
@@ -26,68 +35,54 @@ const CATEGORY_PATTERNS: Array<[RegExp, string]> = [
   [/Focused/i, 'Focused'], [/FOF|Fund\s*of\s*Fund/i, 'FoF'],
 ]
 
-function extractCategory(fundName: string): string {
-  for (const [pattern, label] of CATEGORY_PATTERNS) {
-    if (pattern.test(fundName)) return label
-  }
+function cat(fundName: string): string {
+  for (const [p, l] of CAT_PATTERNS) { if (p.test(fundName)) return l }
   return 'Other'
 }
 
-function classifyRisk(category: string): RiskLevel {
+function risk(category: string): number {
   const c = category.toLowerCase()
-  if (/liquid|overnight|money market|ultra short|low duration/.test(c)) return 'Low'
-  if (/short duration|floater|banking|corporate bond|gilt|debt|credit risk|medium|arbitrage|conservative/i.test(c)) return 'Moderate'
-  if (/large cap|multi cap|flexi cap|large & mid|balanced|index|etf|focused|value|dividend|dynamic/i.test(c)) return 'Moderate'
-  if (/mid cap|contra/i.test(c)) return 'High'
-  if (/small cap|sectoral|thematic|elss|infrastructure|international|fof|aggressive/i.test(c)) return 'Very High'
-  return 'Moderate'
+  if (/liquid|overnight|money market|ultra short|low duration/.test(c)) return 0
+  if (/short|floater|banking|corp|gilt|debt|credit|medium|arb|conserv/i.test(c)) return 1
+  if (/large|multi|flexi|large & mid|balanced|index|etf|focus|value|dividend|dyn/i.test(c)) return 1
+  if (/mid cap|contra/i.test(c)) return 2
+  if (/small|sector|thematic|elss|infra|international|fof|aggr/i.test(c)) return 3
+  return 1
 }
 
-function extractFundHouse(fundName: string): string {
-  const words = fundName.split(' ')
-  if (words.length === 1) return words[0]
-  if (words.length === 2) return words[0]
-  // Try 3 words for houses like "ICICI Prudential", "Nippon India", etc.
-  const threeWord = words.slice(0, 3).join(' ')
-  for (const prefix of [threeWord, words.slice(0, 2).join(' ')]) {
-    if (/^\w[\w\s&]+(?!Fund|Cap|Index|Bond|Gilt|Liquid|ETF|Plan)/i.test(prefix)) {
-      return prefix
+function house(fundName: string): string {
+  const words = fundName.split(' ').filter(w => w.length > 1 && !/^(Fund|Plan|Growth|Dividend|Direct|Regular|Cap|ETF)$/i.test(w))
+  return words.slice(0, 2).join(' ')
+}
+
+function enrich(raw: { schemeCode: number; schemeName: string }[]): LightFund[] {
+  const result: LightFund[] = new Array(raw.length)
+  for (let i = 0; i < raw.length; i++) {
+    const s = raw[i]
+    const fundName = s.schemeName.split(' — ')[0].trim()
+    const cg = cat(fundName)
+    result[i] = {
+      c: s.schemeCode,
+      n: s.schemeName,
+      g: cg,
+      r: risk(cg),
+      h: house(fundName),
     }
   }
-  return words[0]
-}
-
-export interface EnrichedScheme extends MFScheme {
-  category: string
-  risk: RiskLevel
-  fundHouse: string
-}
-
-function enrich(raw: MFScheme[]): EnrichedScheme[] {
-  return raw.map(s => {
-    const parts = s.schemeName.split(' — ')
-    const fundName = parts[0].trim()
-    const cat = extractCategory(fundName)
-    return {
-      ...s,
-      category: cat,
-      risk: classifyRisk(cat),
-      fundHouse: extractFundHouse(fundName),
-    }
-  })
+  return result
 }
 
 export function useFundList() {
-  return useQuery<EnrichedScheme[]>({
+  return useQuery<LightFund[]>({
     queryKey: ['fundList'],
     staleTime: Infinity,
-    gcTime: Infinity,
+    gcTime: 10 * 60_000,
     queryFn: async () => {
-      const cached = await cacheGet<EnrichedScheme[]>(cacheKey(['schemes', 'v2']))
+      const cached = await cacheGet<LightFund[]>(cacheKey(['funds', 'v3']))
       if (cached) return cached
       const raw = await fetchAllSchemes()
       const enriched = enrich(raw)
-      cacheSet(cacheKey(['schemes', 'v2']), enriched, 86400000)
+      cacheSet(cacheKey(['funds', 'v3']), enriched, 86_400_000)
       return enriched
     },
     placeholderData: (prev) => prev,

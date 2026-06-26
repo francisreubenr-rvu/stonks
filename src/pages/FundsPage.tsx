@@ -1,17 +1,17 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useFundList, type EnrichedScheme, type RiskLevel } from '@/hooks/useFundList'
+import { useFundList, type LightFund, RISK_LABELS } from '@/hooks/useFundList'
 import { useDebounce } from '@/hooks/useDebounce'
 import { Input } from '@/components/ui/input'
 import { ScreenerFilters, type FundFilters } from '@/components/ScreenerFilters'
 
 const PAGE_SIZE = 50
 
-const RISK_COLORS: Record<RiskLevel, { bg: string; fg: string }> = {
-  'Low':       { bg: 'var(--risk-low-bg)',   fg: 'var(--risk-low-fg)' },
-  'Moderate':  { bg: 'var(--risk-mod-bg)',   fg: 'var(--risk-mod-fg)' },
-  'High':      { bg: 'var(--risk-high-bg)',  fg: 'var(--risk-high-fg)' },
-  'Very High': { bg: 'var(--risk-vhigh-bg)', fg: 'var(--risk-vhigh-fg)' },
+const RISK_COLORS: Record<number, { bg: string; fg: string }> = {
+  0: { bg: 'var(--risk-low-bg)',   fg: 'var(--risk-low-fg)' },
+  1: { bg: 'var(--risk-mod-bg)',   fg: 'var(--risk-mod-fg)' },
+  2: { bg: 'var(--risk-high-bg)',  fg: 'var(--risk-high-fg)' },
+  3: { bg: 'var(--risk-vhigh-bg)', fg: 'var(--risk-vhigh-fg)' },
 }
 
 function Shimmer() {
@@ -66,7 +66,7 @@ export default function FundsPage() {
 
   const uniqueCategories = useMemo(() => {
     const counts = new Map<string, number>()
-    schemes.forEach(s => { if (s.category) counts.set(s.category, (counts.get(s.category) || 0) + 1) })
+    schemes.forEach(s => { if (s.g) counts.set(s.g, (counts.get(s.g) || 0) + 1) })
     return Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([cat]) => cat)
@@ -74,7 +74,7 @@ export default function FundsPage() {
 
   const fundHouses = useMemo(() => {
     const set = new Set<string>()
-    schemes.forEach(s => { if (s.fundHouse) set.add(s.fundHouse) })
+    schemes.forEach(s => { if (s.h) set.add(s.h) })
     return Array.from(set).sort()
   }, [schemes])
 
@@ -83,21 +83,21 @@ export default function FundsPage() {
 
     const q = debouncedQuery.toLowerCase()
     if (q) {
-      result = result.filter(f => f.schemeName.toLowerCase().includes(q))
+      result = result.filter(f => f.n.toLowerCase().includes(q))
     }
 
     if (filters.categories.length > 0) {
-      result = result.filter(f => filters.categories.includes(f.category))
+      result = result.filter(f => filters.categories.includes(f.g))
     }
 
     if (filters.riskLevels.length > 0) {
-      result = result.filter(f => filters.riskLevels.includes(f.risk))
+      result = result.filter(f => filters.riskLevels.includes(RISK_LABELS[f.r]))
     }
 
     if (filters.fundHouse) {
       const h = filters.fundHouse.toLowerCase()
       result = result.filter(f =>
-        f.fundHouse.toLowerCase().includes(h) || h.includes(f.fundHouse.toLowerCase())
+        f.h.toLowerCase().includes(h) || h.includes(f.h.toLowerCase())
       )
     }
 
@@ -187,37 +187,37 @@ export default function FundsPage() {
               <p className="text-[11px] text-muted-foreground">Try adjusting filters or search</p>
             </div>
           ) : (
-            pageData.map((scheme: EnrichedScheme, i: number) => {
-              const rc = RISK_COLORS[scheme.risk]
+          pageData.map((fund: LightFund, i: number) => {
+            const rc = RISK_COLORS[fund.r]
               return (
                 <button
-                  key={scheme.schemeCode}
-                  onClick={() => navigate(`/fund/${scheme.schemeCode}`)}
+                  key={fund.c}
+                  onClick={() => navigate(`/fund/${fund.c}`)}
                   className="grid grid-cols-[48px_80px_1fr_100px_130px_80px] w-full px-4 py-2.5 border-b border-border last:border-0 text-left hover:bg-white/[0.03] transition-colors duration-100 cursor-pointer group"
                 >
                   <span className="font-mono text-[10px] text-muted-foreground tabular-nums self-center">
                     {(page * PAGE_SIZE + i + 1).toLocaleString()}
                   </span>
                   <span className="font-mono text-[10px] text-muted-foreground tabular-nums self-center">
-                    {scheme.schemeCode}
+                    {fund.c}
                   </span>
                   <div className="min-w-0 pr-2">
                     <span className="text-[12px] text-foreground group-hover:text-primary transition-colors duration-100 leading-snug block truncate">
-                      {scheme.schemeName}
+                      {fund.n}
                     </span>
                   </div>
                   <span className="text-[10px] text-muted-foreground text-right truncate self-center px-1">
-                    {scheme.fundHouse.length > 14 ? scheme.fundHouse.slice(0, 14) + '…' : scheme.fundHouse}
+                    {fund.h.length > 14 ? fund.h.slice(0, 14) + '…' : fund.h}
                   </span>
                   <span className="text-[10px] text-muted-foreground text-right truncate self-center px-1">
-                    {scheme.category.length > 18 ? scheme.category.slice(0, 18) + '…' : scheme.category}
+                    {fund.g.length > 18 ? fund.g.slice(0, 18) + '…' : fund.g}
                   </span>
                   <span className="text-right self-center">
                     <span
                       className="inline-block text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
                       style={{ background: rc.bg, color: rc.fg }}
                     >
-                      {scheme.risk}
+                      {RISK_LABELS[fund.r]}
                     </span>
                   </span>
                 </button>

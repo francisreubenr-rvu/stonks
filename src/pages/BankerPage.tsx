@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useFundList } from '@/hooks/useFundList'
+import { useFundList, RISK_LABELS } from '@/hooks/useFundList'
 import { useBanker } from '@/hooks/useBanker'
 import { useDashboard } from '@/hooks/useDashboard'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
@@ -330,8 +330,8 @@ export default function BankerPage() {
                       : score >= 55 ? 'var(--primary)' : 'var(--muted-foreground)'
                     return (
                       <button
-                        key={scheme.schemeCode}
-                        onClick={() => navigate(`/fund/${scheme.schemeCode}`)}
+                        key={scheme.c}
+                        onClick={() => navigate(`/fund/${scheme.c}`)}
                         className="border border-border rounded-lg p-4 bg-card text-left hover:border-primary/30 transition-all duration-200 cursor-pointer group"
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -344,24 +344,24 @@ export default function BankerPage() {
                           </span>
                         </div>
                         <p className="text-[12px] font-medium text-foreground leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                          {scheme.schemeName.split(' — ')[0]}
+                          {scheme.n.split(' — ')[0]}
                         </p>
                         <div className="flex flex-wrap gap-1 mb-2">
                           <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-border text-muted-foreground">
-                            {scheme.category}
+                            {scheme.g}
                           </span>
                           <span className="text-[9px] px-1.5 py-0.5 rounded-full"
                             style={{
-                              background: scheme.risk === 'Low' ? 'var(--risk-low-bg)'
-                                : scheme.risk === 'Moderate' ? 'var(--risk-mod-bg)'
-                                : scheme.risk === 'High' ? 'var(--risk-high-bg)'
+                              background: scheme.r === 0 ? 'var(--risk-low-bg)'
+                                : scheme.r === 1 ? 'var(--risk-mod-bg)'
+                                : scheme.r === 2 ? 'var(--risk-high-bg)'
                                 : 'var(--risk-vhigh-bg)',
-                              color: scheme.risk === 'Low' ? 'var(--risk-low-fg)'
-                                : scheme.risk === 'Moderate' ? 'var(--risk-mod-fg)'
-                                : scheme.risk === 'High' ? 'var(--risk-high-fg)'
+                              color: scheme.r === 0 ? 'var(--risk-low-fg)'
+                                : scheme.r === 1 ? 'var(--risk-mod-fg)'
+                                : scheme.r === 2 ? 'var(--risk-high-fg)'
                                 : 'var(--risk-vhigh-fg)',
                             }}>
-                            {scheme.risk}
+                            {RISK_LABELS[scheme.r]}
                           </span>
                         </div>
                         {reasoning.length > 0 && (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { EnrichedScheme } from '@/hooks/useFundList'
+import type { LightFund } from '@/hooks/useFundList'
 import type { FundStats } from '@/api/dataTypes'
 import { fetchFundDetail } from '@/api/mfapiClient'
 import { computeStats } from '@/lib/fundStats'
@@ -7,15 +7,14 @@ import { filterByProfile, type BankerRisk, type InvestmentProfile } from '@/lib/
 import { buffettScore } from '@/lib/buffett'
 
 interface ScoredFund {
-  scheme: EnrichedScheme
+  scheme: LightFund
   stats: FundStats | null
   score: number
-  buffettScore: number
   reasoning: string[]
   status: 'pending' | 'loading' | 'ready' | 'error'
 }
 
-export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, investProfile: InvestmentProfile, topN = 12) {
+export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfile: InvestmentProfile, topN = 12) {
   const [candidates, setCandidates] = useState<ScoredFund[]>([])
   const [isScanning, setIsScanning] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -28,16 +27,16 @@ export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, invest
     // Filter by risk profile
     const eligible = filterByProfile(schemes, profile)
 
-    // Group by category and pick top candidates per category
-    const byCategory = new Map<string, EnrichedScheme[]>()
+    // Group by category and pick top candidates
+    const byCategory = new Map<string, LightFund[]>()
     for (const s of eligible) {
-      const list = byCategory.get(s.category) || []
+      const list = byCategory.get(s.g) || []
       list.push(s)
-      byCategory.set(s.category, list)
+      byCategory.set(s.g, list)
     }
 
     // Pick diverse candidates across categories
-    const selected: EnrichedScheme[] = []
+    const selected: LightFund[] = []
     const cats = Array.from(byCategory.keys()).sort((a, b) =>
       (byCategory.get(b)?.length ?? 0) - (byCategory.get(a)?.length ?? 0)
     )
@@ -65,7 +64,7 @@ export function useBanker(schemes: EnrichedScheme[], profile: BankerRisk, invest
       ))
 
       try {
-        const detail = await fetchFundDetail(final[i].schemeCode)
+        const detail = await fetchFundDetail(final[i].c.toString())
         const stats = computeStats(detail.data)
         const { score: bs, reasoning } = buffettScore(final[i], stats, investProfile)
         setCandidates(prev => prev.map((c, j) =>
