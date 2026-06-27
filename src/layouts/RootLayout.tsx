@@ -1,5 +1,7 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Suspense } from 'react'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { SearchBar } from '@/components/SearchBar'
+import { PageSkeleton } from '@/components/PageSkeleton'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', end: false },
@@ -13,6 +15,7 @@ const NAV = [
 ]
 
 export default function RootLayout() {
+  const location = useLocation()
   return (
     <div className="min-h-dvh bg-background flex flex-col" style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
       <header
@@ -54,7 +57,11 @@ export default function RootLayout() {
       </header>
 
       <main className="flex-1 max-w-[1200px] mx-auto w-full px-6 py-8">
-        <Outlet />
+        <Suspense fallback={<PageSkeleton />}>
+          <div className="animate-[fadeIn_200ms_ease-out]" key={location.pathname}>
+            <Outlet />
+          </div>
+        </Suspense>
       </main>
 
       <footer className="border-t py-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
