@@ -111,6 +111,68 @@ export function buffettScore(fund: LightFund, stats: FundStats | null, _profile:
   return { score: Math.max(0, Math.min(100, Math.round(score))), reasoning: reasons.slice(0, 3) }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  PROPRIETARY STONKS SCORE™ — tie-breaking composite formula
+//  Eliminates duplicate scores by factoring micro-differentiators
+// ═══════════════════════════════════════════════════════════════
+
+export function stonksScore(
+  fund: LightFund,
+  stats: FundStats | null,
+  profile: InvestmentProfile,
+): number {
+  const { score: base } = buffettScore(fund, stats, profile)
+
+  if (!stats) return base
+
+  // Tiebreakers — micro-differentiators (0 to +0.999, never affect integer part)
+  let tie = 0
+
+  // Sortino ratio: 0 → +0.3
+  if (stats.sortino !== null && stats.sortino > 0) {
+    tie += Math.min(stats.sortino, 6) / 20
+  }
+
+  // Win rate: 0 → +0.05
+  tie += stats.winRate * 0.05
+
+  // Data points (history length): 0 → +0.1
+  tie += Math.min(stats.dataPoints, 3650) / 36500
+
+  // Max drawdown recovery: lower DD → +0.15
+  const dd = Math.abs(stats.maxDrawdown)
+  if (dd < 0.05) tie += 0.15
+  else if (dd < 0.10) tie += 0.10
+  else if (dd < 0.20) tie += 0.05
+  else if (dd > 0.40) tie -= 0.10
+
+  // CAGR quality: steady moderate returns → +0.1
+  if (stats.cagr1y !== null && stats.cagr1y > 0.05 && stats.cagr1y <= 0.30) {
+    tie += 0.10
+  } else if (stats.cagr1y !== null && stats.cagr1y > 0.30) {
+    tie -= 0.05
+  }
+
+  // Sharpe bonus: 0 → +0.05
+  if (stats.sharpe !== null && stats.sharpe > 0) {
+    tie += Math.min(stats.sharpe, 2) / 40
+  }
+
+  // Rolling 1Y stability: tight range → +0.05
+  if (stats.rolling1yMin !== null && stats.rolling1yMax !== null) {
+    const range = stats.rolling1yMax - stats.rolling1yMin
+    if (range < 0.15) tie += 0.05
+  }
+
+  // Fund house reputation (treat long names as proxy for established houses)
+  if (fund.h.length > 6) tie += 0.02
+
+  // Direct plan preference
+  if (fund.n.toLowerCase().includes('direct')) tie += 0.03
+
+  return base + tie
+}
+
 export function oracleWisdom(profile: InvestmentProfile): string[] {
   const w: string[] = []
   if (profile.horizon === '<1Y') w.push('Mr. Buffett would say: "If you are not willing to own something for ten years, do not own it for ten minutes."')

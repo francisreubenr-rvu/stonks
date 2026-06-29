@@ -5,6 +5,7 @@ import { useBanker } from '@/hooks/useBanker'
 import { useDashboard } from '@/hooks/useDashboard'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
 import { oracleQuote, oracleWisdom, oracleSignOff, PRINCIPLES } from '@/lib/buffett'
+import { getApiKey, setApiKey, clearApiKey, analyzePortfolio } from '@/api/deepseekClient'
 
 const PROFILES: BankerRisk[] = ['Conservative', 'Moderate', 'Aggressive']
 
@@ -26,17 +27,6 @@ const HORIZONS = [
 ] as const
 
 const FUND_COUNTS = [1, 2, 3, 5, 8, 12] as const
-const AMOUNTS = [
-  { value: '<50K',    label: 'Up to ₹50,000' },
-  { value: '50K-2L',  label: '₹50K – ₹2 Lakh' },
-  { value: '2L-10L',  label: '₹2 – ₹10 Lakh' },
-  { value: '10L+',    label: '₹10 Lakh+' },
-] as const
-const FREQUENCIES = [
-  { value: 'Lumpsum',      label: 'One-time' },
-  { value: 'Monthly SIP',  label: 'Monthly SIP' },
-  { value: 'Quarterly',    label: 'Every Quarter' },
-] as const
 
 export default function BankerPage() {
   const navigate = useNavigate()
@@ -46,9 +36,13 @@ export default function BankerPage() {
   const [riskProfile, setRiskProfile] = useState<BankerRisk>('Moderate')
   const [horizon, setHorizon] = useState<string>('3-5Y')
   const [fundCount, setFundCount] = useState<number>(5)
-  const [amount, setAmount] = useState<string>('50K-2L')
-  const [frequency, setFrequency] = useState<string>('Monthly SIP')
+  const [amount, setAmount] = useState('50000')
+  const [frequency, setFrequency] = useState('Monthly')
   const [rescanKey, setRescanKey] = useState(0)
+  const [deepseekKey, setDeepseekKey] = useState(getApiKey() ?? '')
+  const [keySaved, setKeySaved] = useState(!!getApiKey())
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
 
   const quote = useMemo(() => oracleQuote(step === 'scan' ? 'patience' : 'value'), [step])
 
@@ -231,20 +225,33 @@ export default function BankerPage() {
 
             <div>
               <p className="text-[11px] font-medium text-foreground mb-2">
-                How much capital are you deploying?
+                How much do you plan to invest (₹)?
               </p>
-              <div className="flex flex-wrap gap-2">
-                {AMOUNTS.map(a => (
+              <input
+                type="number"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                placeholder="e.g. 50000"
+                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <p className="text-[11px] font-medium text-foreground mb-2">
+                Investment interval
+              </p>
+              <div className="flex gap-2">
+                {['Monthly', 'Quarterly', 'Yearly', 'Lumpsum'].map(opt => (
                   <button
-                    key={a.value}
-                    onClick={() => setAmount(a.value)}
-                    className={`px-4 py-2 rounded-lg border transition-all duration-150 cursor-pointer ${
-                      amount === a.value
+                    key={opt}
+                    onClick={() => setFrequency(opt)}
+                    className={`px-4 py-2 rounded-lg border transition-all duration-150 cursor-pointer text-[13px] font-medium ${
+                      frequency === opt
                         ? 'bg-primary/10 border-primary/40 text-primary'
                         : 'border-border text-muted-foreground hover:border-primary/20 hover:text-foreground'
                     }`}
                   >
-                    <span className="text-[13px] font-medium">{a.label}</span>
+                    {opt}
                   </button>
                 ))}
               </div>
@@ -252,23 +259,35 @@ export default function BankerPage() {
 
             <div>
               <p className="text-[11px] font-medium text-foreground mb-2">
-                How will you deploy this capital?
+                DeepSeek API key <span className="text-[10px] text-muted-foreground">(optional — AI analysis)</span>
               </p>
-              <div className="flex flex-wrap gap-2">
-                {FREQUENCIES.map(f => (
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={deepseekKey}
+                  onChange={e => setDeepseekKey(e.target.value)}
+                  placeholder="sk-..."
+                  className="flex-1 h-9 bg-muted border border-border rounded-lg px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                />
+                {keySaved ? (
                   <button
-                    key={f.value}
-                    onClick={() => setFrequency(f.value)}
-                    className={`px-4 py-2 rounded-lg border transition-all duration-150 cursor-pointer ${
-                      frequency === f.value
-                        ? 'bg-primary/10 border-primary/40 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/20 hover:text-foreground'
-                    }`}
+                    onClick={() => { clearApiKey(); setDeepseekKey(''); setKeySaved(false); setAiAnalysis(null) }}
+                    className="px-3 h-9 text-[12px] font-medium border border-border rounded-lg text-muted-foreground hover:text-destructive cursor-pointer shrink-0"
                   >
-                    <span className="text-[13px] font-medium">{f.label}</span>
+                    Remove
                   </button>
-                ))}
+                ) : (
+                  <button
+                    onClick={() => { if (deepseekKey) { setApiKey(deepseekKey); setKeySaved(true) } }}
+                    className="px-3 h-9 text-[12px] font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 cursor-pointer shrink-0"
+                  >
+                    Save
+                  </button>
+                )}
               </div>
+              {keySaved && (
+                <p className="text-[10px] text-primary mt-1">API key saved — AI analysis runs after scan</p>
+              )}
             </div>
           </div>
 
@@ -341,7 +360,7 @@ export default function BankerPage() {
                           </span>
                           <span className="font-mono text-[11px] font-bold tabular-nums"
                             style={{ color: scoreColor }}>
-                            {score}/100
+                            {score.toFixed(1)}/100
                           </span>
                         </div>
                         <p className="text-[12px] font-medium text-foreground leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
@@ -438,12 +457,51 @@ export default function BankerPage() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
-          <p className="text-center text-[10px] text-muted-foreground pt-2">
-            Algorithmic interpretation of Buffett's philosophy · Not financial advice
-          </p>
+            {aiAnalysis && (
+              <div className="border border-border rounded-lg p-4 bg-card mt-4"
+                style={{ borderColor: 'rgba(52,211,153,0.2)' }}>
+                <p className="text-[10px] font-medium text-primary uppercase tracking-wider mb-2">
+                  🤖 DeepSeek Analysis
+                </p>
+                <p className="text-[12px] text-foreground leading-relaxed whitespace-pre-wrap">
+                  {aiAnalysis}
+                </p>
+              </div>
+            )}
+
+            {keySaved && !aiAnalysis && !isScanning && topPicks.length > 0 && (
+              <div className="text-center pt-1">
+                <button
+                  onClick={async () => {
+                    setAiLoading(true)
+                    try {
+                      const funds = topPicks.map(p => ({
+                        name: p.scheme.n.split(' — ')[0],
+                        score: p.score,
+                        category: p.scheme.g,
+                      }))
+                      const analysis = await analyzePortfolio(funds, investProfile)
+                      setAiAnalysis(analysis)
+                    } catch (e: any) {
+                      setAiAnalysis(`Analysis unavailable: ${e.message}`)
+                    } finally {
+                      setAiLoading(false)
+                    }
+                  }}
+                  disabled={aiLoading}
+                  className="px-6 py-2 rounded-lg border border-primary/30 text-[12px] font-medium text-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                >
+                  {aiLoading ? 'Analyzing…' : '🤖 Run AI Analysis'}
+                </button>
+              </div>
+            )}
+
+            <p className="text-center text-[10px] text-muted-foreground pt-2">
+              Algorithmic interpretation · Not financial advice
+            </p>
 
           {!isScanning && topPicks.length > 0 && (
             <div className="text-center pt-1">

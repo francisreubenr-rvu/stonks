@@ -5,7 +5,7 @@ import { cacheGet, cacheSet, cacheKey } from '@/lib/cache'
 import { fetchFundDetail } from '@/api/mfapiClient'
 import { computeStats } from '@/lib/fundStats'
 import { filterByProfile, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
-import { buffettScore } from '@/lib/buffett'
+import { buffettScore, stonksScore } from '@/lib/buffett'
 
 const BATCH_SIZE = 5
 const STATS_TTL = 86_400_000
@@ -64,7 +64,8 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
 
     // Show baseline immediately
     const initial: ScoredFund[] = final.map(s => {
-      const { score, reasoning } = buffettScore(s, null, investProfile)
+      const { reasoning } = buffettScore(s, null, investProfile)
+      const score = stonksScore(s, null, investProfile)
       return { scheme: s, stats: null, score, reasoning }
     })
     if (version !== versionRef.current) return
@@ -95,8 +96,9 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
         setCandidates(prev => prev.map(c => {
           const s = cachedMap.get(c.scheme.c)
           if (s) {
-            const { score, reasoning } = buffettScore(c.scheme, s, investProfile)
-            return { ...c, stats: s, score, reasoning }
+            const sScore = stonksScore(c.scheme, s, investProfile)
+            const { reasoning } = buffettScore(c.scheme, s, investProfile)
+            return { ...c, stats: s, score: sScore, reasoning }
           }
           return c
         }))
@@ -122,8 +124,9 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
           setCandidates(prev => prev.map(c => {
             const s = fetched.get(c.scheme.c)
             if (s) {
-              const { score, reasoning } = buffettScore(c.scheme, s, investProfile)
-              return { ...c, stats: s, score, reasoning }
+              const sScore = stonksScore(c.scheme, s, investProfile)
+              const { reasoning } = buffettScore(c.scheme, s, investProfile)
+              return { ...c, stats: s, score: sScore, reasoning }
             }
             return c
           }))
