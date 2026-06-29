@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useFundList, RISK_LABELS } from '@/hooks/useFundList'
+import { useFundList, RISK_LABELS, type LightFund } from '@/hooks/useFundList'
 import { useBanker } from '@/hooks/useBanker'
 import { useDashboard } from '@/hooks/useDashboard'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
@@ -27,6 +27,7 @@ const HORIZONS = [
 ] as const
 
 const FUND_COUNTS = [1, 2, 3, 5, 8, 12] as const
+const EMPTY_SCHEMES: LightFund[] = []
 
 export default function BankerPage() {
   const navigate = useNavigate()
@@ -46,12 +47,20 @@ export default function BankerPage() {
 
   const quote = useMemo(() => oracleQuote(step === 'scan' ? 'patience' : 'value'), [step])
 
-  const investProfile: InvestmentProfile = { horizon, fundCount, amount, frequency }
+  const investProfile = useMemo<InvestmentProfile>(
+    () => ({ horizon, fundCount, amount, frequency }),
+    [horizon, fundCount, amount, frequency],
+  )
   const wisdom = useMemo(() => oracleWisdom(investProfile), [investProfile])
   const signOff = useMemo(() => oracleSignOff(), [])
 
   const { candidates, isScanning, progress, total } = useBanker(
-    schemes ?? [], riskProfile, investProfile, Math.min(fundCount * 3, 18), rescanKey,
+    schemes ?? EMPTY_SCHEMES,
+    riskProfile,
+    investProfile,
+    Math.min(fundCount * 3, 18),
+    rescanKey,
+    step === 'scan',
   )
 
   // topPicks is ALWAYS exactly fundCount items — enforced at every render

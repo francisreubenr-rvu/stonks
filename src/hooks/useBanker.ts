@@ -28,15 +28,25 @@ interface ScoredFund {
   reasoning: string[]
 }
 
-export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfile: InvestmentProfile, scanCount = 15, rescanKey = 0) {
+export function useBanker(
+  schemes: LightFund[],
+  profile: BankerRisk,
+  investProfile: InvestmentProfile,
+  scanCount = 15,
+  rescanKey = 0,
+  enabled = false,
+) {
   const [candidates, setCandidates] = useState<ScoredFund[]>([])
   const [isScanning, setIsScanning] = useState(false)
   const [progress, setProgress] = useState(0)
   const scanningRef = useRef(false)
   const versionRef = useRef(0)
+  const investProfileRef = useRef(investProfile)
+  investProfileRef.current = investProfile
 
   const scan = useCallback(() => {
     if (schemes.length === 0) return
+    const profileInputs = investProfileRef.current
     scanningRef.current = true
     setIsScanning(true)
     setProgress(0)
@@ -64,8 +74,8 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
 
     // Show baseline immediately
     const initial: ScoredFund[] = final.map(s => {
-      const { reasoning } = buffettScore(s, null, investProfile)
-      const score = stonksScore(s, null, investProfile)
+      const { reasoning } = buffettScore(s, null, profileInputs)
+      const score = stonksScore(s, null, profileInputs)
       return { scheme: s, stats: null, score, reasoning }
     })
     if (version !== versionRef.current) return
@@ -96,8 +106,8 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
         setCandidates(prev => prev.map(c => {
           const s = cachedMap.get(c.scheme.c)
           if (s) {
-            const sScore = stonksScore(c.scheme, s, investProfile)
-            const { reasoning } = buffettScore(c.scheme, s, investProfile)
+            const sScore = stonksScore(c.scheme, s, profileInputs)
+            const { reasoning } = buffettScore(c.scheme, s, profileInputs)
             return { ...c, stats: s, score: sScore, reasoning }
           }
           return c
@@ -124,8 +134,8 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
           setCandidates(prev => prev.map(c => {
             const s = fetched.get(c.scheme.c)
             if (s) {
-              const sScore = stonksScore(c.scheme, s, investProfile)
-              const { reasoning } = buffettScore(c.scheme, s, investProfile)
+              const sScore = stonksScore(c.scheme, s, profileInputs)
+              const { reasoning } = buffettScore(c.scheme, s, profileInputs)
               return { ...c, stats: s, score: sScore, reasoning }
             }
             return c
@@ -140,17 +150,16 @@ export function useBanker(schemes: LightFund[], profile: BankerRisk, investProfi
       setProgress(100)
       scanningRef.current = false
     })()
-  }, [schemes, profile, investProfile, scanCount])
+  }, [schemes, profile, scanCount])
 
   useEffect(() => {
-    if (schemes.length > 0) {
-      scanningRef.current = false
-      setIsScanning(false)
-      setCandidates([])
-      setProgress(0)
-      scan()
-    }
-  }, [schemes, profile, scan, rescanKey])
+    if (!enabled || schemes.length === 0) return
+    scanningRef.current = false
+    setIsScanning(false)
+    setCandidates([])
+    setProgress(0)
+    scan()
+  }, [enabled, schemes, profile, scanCount, rescanKey, scan])
 
   return {
     candidates: candidates.slice(0, scanCount).sort((a, b) => b.score - a.score),
