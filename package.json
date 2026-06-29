@@ -6,7 +6,7 @@
   "homepage": "https://francisreubenr-rvu.github.io/stonks",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "predeploy": "npm run build",

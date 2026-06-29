@@ -3,9 +3,18 @@ const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
 let cachedKey: string | null = null
 
 export function getApiKey(): string | null {
+  // 1. Vite env var (set once in .env.local)
+  if (import.meta.env.VITE_DEEPSEEK_KEY) {
+    return import.meta.env.VITE_DEEPSEEK_KEY
+  }
+  // 2. localStorage (set via UI)
   if (cachedKey) return cachedKey
   cachedKey = localStorage.getItem('stonks:deepseek_key')
   return cachedKey
+}
+
+export function hasEnvKey(): boolean {
+  return !!import.meta.env.VITE_DEEPSEEK_KEY
 }
 
 export function setApiKey(key: string) {

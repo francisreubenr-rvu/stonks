@@ -5,7 +5,7 @@ import { useBanker } from '@/hooks/useBanker'
 import { useDashboard } from '@/hooks/useDashboard'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
 import { oracleQuote, oracleWisdom, oracleSignOff, PRINCIPLES } from '@/lib/buffett'
-import { getApiKey, setApiKey, clearApiKey, analyzePortfolio } from '@/api/deepseekClient'
+import { getApiKey, setApiKey, clearApiKey, analyzePortfolio, hasEnvKey } from '@/api/deepseekClient'
 
 const PROFILES: BankerRisk[] = ['Conservative', 'Moderate', 'Aggressive']
 
@@ -261,30 +261,36 @@ export default function BankerPage() {
               <p className="text-[11px] font-medium text-foreground mb-2">
                 DeepSeek API key <span className="text-[10px] text-muted-foreground">(optional — AI analysis)</span>
               </p>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={deepseekKey}
-                  onChange={e => setDeepseekKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="flex-1 h-9 bg-muted border border-border rounded-lg px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-                />
-                {keySaved ? (
-                  <button
-                    onClick={() => { clearApiKey(); setDeepseekKey(''); setKeySaved(false); setAiAnalysis(null) }}
-                    className="px-3 h-9 text-[12px] font-medium border border-border rounded-lg text-muted-foreground hover:text-destructive cursor-pointer shrink-0"
-                  >
-                    Remove
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => { if (deepseekKey) { setApiKey(deepseekKey); setKeySaved(true) } }}
-                    className="px-3 h-9 text-[12px] font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 cursor-pointer shrink-0"
-                  >
-                    Save
-                  </button>
-                )}
-              </div>
+              {hasEnvKey() ? (
+                <p className="text-[12px] text-primary">
+                  ✓ Detected from <span className="font-mono">VITE_DEEPSEEK_KEY</span>
+                </p>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={deepseekKey}
+                    onChange={e => setDeepseekKey(e.target.value)}
+                    placeholder="sk-..."
+                    className="flex-1 h-9 bg-muted border border-border rounded-lg px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                  />
+                  {keySaved ? (
+                    <button
+                      onClick={() => { clearApiKey(); setDeepseekKey(''); setKeySaved(false); setAiAnalysis(null) }}
+                      className="px-3 h-9 text-[12px] font-medium border border-border rounded-lg text-muted-foreground hover:text-destructive cursor-pointer shrink-0"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { if (deepseekKey) { setApiKey(deepseekKey); setKeySaved(true) } }}
+                      className="px-3 h-9 text-[12px] font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 cursor-pointer shrink-0"
+                    >
+                      Save
+                    </button>
+                  )}
+                </div>
+              )}
               {keySaved && (
                 <p className="text-[10px] text-primary mt-1">API key saved — AI analysis runs after scan</p>
               )}
