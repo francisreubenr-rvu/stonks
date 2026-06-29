@@ -311,7 +311,7 @@ export default function BankerPage() {
       {/* ── SCANNING & RESULTS ───────────────────────────────────────────────── */}
       {step === 'scan' && (
         <>
-          {!isScanning && topPicks.length > 0 && (
+          {topPicks.length > 0 && (
             <div className="flex flex-wrap gap-2 text-[10px]">
               {[riskProfile, horizon, `${fundCount} funds`, frequency].map(tag => (
                 <span key={tag} className="px-2 py-1 rounded-full border border-border text-muted-foreground">
@@ -478,7 +478,7 @@ export default function BankerPage() {
               </div>
             )}
 
-            {keySaved && !aiAnalysis && !isScanning && topPicks.length > 0 && (
+            {getApiKey() && !aiAnalysis && topPicks.length > 0 && (
               <div className="text-center pt-1">
                 <button
                   onClick={async () => {
@@ -509,7 +509,7 @@ export default function BankerPage() {
               Algorithmic interpretation · Not financial advice
             </p>
 
-          {!isScanning && topPicks.length > 0 && (
+          {topPicks.length > 0 && (
             <div className="text-center pt-1">
               <button
                 onClick={() => setRescanKey(k => k + 1)}
