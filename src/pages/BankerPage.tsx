@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useFundList, RISK_LABELS, type LightFund } from '@/hooks/useFundList'
+import { useFundList, type LightFund } from '@/hooks/useFundList'
 import { useBanker } from '@/hooks/useBanker'
 import { useDashboard } from '@/hooks/useDashboard'
+import { useSxEffects } from '@/hooks/useSxEffects'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
 import { oracleQuote, oracleWisdom, oracleSignOff, PRINCIPLES } from '@/lib/buffett'
 import { getApiKey, setApiKey, clearApiKey, analyzePortfolio, hasEnvKey } from '@/api/deepseekClient'
+import { RiskBadge } from '@/components/RiskBadge'
+import { SectionEyebrow } from '@/components/SectionEyebrow'
 
 const PROFILES: BankerRisk[] = ['Conservative', 'Moderate', 'Aggressive']
 
@@ -29,6 +32,14 @@ const HORIZONS = [
 const FUND_COUNTS = [1, 2, 3, 5, 8, 12] as const
 const EMPTY_SCHEMES: LightFund[] = []
 
+function chipClass(active: boolean) {
+  return `px-3 py-2 rounded-md border text-left transition-colors duration-150 cursor-pointer text-sm font-medium ${
+    active
+      ? 'bg-primary/10 border-primary text-primary'
+      : 'border-border text-muted-foreground hover:border-[var(--border-strong)] hover:text-foreground'
+  }`
+}
+
 export default function BankerPage() {
   const navigate = useNavigate()
   const { data: schemes } = useFundList()
@@ -44,6 +55,7 @@ export default function BankerPage() {
   const [keySaved, setKeySaved] = useState(!!getApiKey())
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
+  const rootRef = useSxEffects<HTMLDivElement>([step])
 
   const quote = useMemo(() => oracleQuote(step === 'scan' ? 'patience' : 'value'), [step])
 
@@ -79,8 +91,8 @@ export default function BankerPage() {
       <div className="space-y-6">
         <div className="border border-border rounded-lg p-5 bg-card space-y-3">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-            <span className="text-[12px] text-foreground font-medium">
+            <span className="w-3 h-3 rounded-full bg-primary" style={{ animation: 'sxPulse 1.1s ease-in-out infinite' }} />
+            <span className="text-sm text-foreground font-medium">
               Loading fund universe…
             </span>
           </div>
@@ -90,41 +102,40 @@ export default function BankerPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={rootRef} className="max-w-3xl">
       {/* Header with quote */}
-      <div className="border border-border rounded-lg p-5 bg-card space-y-3"
-        style={{ borderColor: 'rgba(52,211,153,0.15)' }}>
+      <div data-reveal className="border rounded-lg p-6 bg-card space-y-3 mb-6"
+        style={{ borderColor: 'var(--primary-subtle)', background: 'linear-gradient(180deg, var(--primary-subtle), var(--card))' }}>
         <div className="flex items-center gap-3">
           <span className="text-2xl">🏛️</span>
           <div>
-            <h2 className="text-[16px] font-bold text-foreground">The Oracle of Omaha</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <h1 className="text-lg font-semibold text-foreground">The Oracle of Omaha</h1>
+            <p className="text-xs text-muted-foreground">
               Investment philosophy of Warren E. Buffett · Value. Patience. Discipline.
             </p>
           </div>
         </div>
-        <div className="pl-10 border-l-2 border-primary/30">
-          <p className="text-[13px] italic text-foreground leading-relaxed">
+        <div className="pl-4 border-l-2 border-primary/40">
+          <p className="text-sm italic text-foreground leading-relaxed">
             "{quote}"
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">{signOff}</p>
+          <p className="text-xs text-muted-foreground mt-1">{signOff}</p>
         </div>
       </div>
 
       {/* Market snapshot */}
       {dashboard && dashboard.indices && (
-        <div className="grid grid-cols-3 gap-2">
+        <div data-reveal className="grid grid-cols-3 gap-3 mb-6">
           {(dashboard.indices ?? []).slice(0, 3).map(idx => {
             const pos = idx.change >= 0
             return (
-              <div key={idx.symbol} className="border border-border rounded-lg p-3 bg-card"
-                style={{ borderColor: pos ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)' }}>
-                <p className="text-[9px] text-muted-foreground uppercase">{idx.name}</p>
-                <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="font-mono text-sm font-bold text-foreground tabular-nums">
+              <div key={idx.symbol} className="border border-border rounded-lg p-3 bg-card">
+                <p className="text-xs text-muted-foreground uppercase">{idx.name}</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="font-mono text-sm font-semibold text-foreground tabular-nums">
                     {idx.value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                   </span>
-                  <span className="font-mono text-[10px] tabular-nums"
+                  <span className="font-mono text-xs tabular-nums"
                     style={{ color: pos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}>
                     {pos ? '+' : ''}{idx.changePct.toFixed(1)}%
                   </span>
@@ -138,29 +149,28 @@ export default function BankerPage() {
       {/* ── QUESTIONNAIRE ───────────────────────────────────────────────────── */}
       {step !== 'scan' && (
         <>
+          <div data-reveal className="mb-6">
+            <SectionEyebrow eyebrow="Investment Advisor" title="Seek the Oracle's counsel" />
+          </div>
+
           {/* Step 1: Risk Profile */}
-          <div className="border border-border rounded-lg p-5 bg-card space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold bg-primary/15 text-primary px-2 py-0.5 rounded-full">
-                STEP 1
-              </span>
-              <p className="text-[13px] font-semibold text-foreground">
-                What is your tolerance for temporary market declines?
-              </p>
-            </div>
+          <div data-reveal className="border border-border rounded-lg p-5 bg-card space-y-4 mb-6">
+            <p className="text-sm font-semibold text-foreground">
+              What is your tolerance for temporary market declines?
+            </p>
             <div className="grid grid-cols-3 gap-3">
               {PROFILES.map(p => (
                 <button
                   key={p}
                   onClick={() => setRiskProfile(p)}
-                  className={`text-center px-4 py-4 rounded-lg border transition-all duration-200 cursor-pointer ${
+                  className={`text-center px-4 py-4 rounded-lg border transition-colors duration-150 cursor-pointer ${
                     riskProfile === p
-                      ? 'bg-primary/10 border-primary/40 text-primary ring-1 ring-primary/30'
-                      : 'border-border text-muted-foreground hover:border-primary/20 hover:text-foreground'
+                      ? 'bg-primary/10 border-primary text-primary'
+                      : 'border-border text-muted-foreground hover:border-[var(--border-strong)] hover:text-foreground'
                   }`}
                 >
-                  <span className="block text-[13px] font-semibold">{p}</span>
-                  <span className="block text-[10px] mt-1 opacity-70">
+                  <span className="block text-sm font-semibold">{p}</span>
+                  <span className="block text-xs mt-1 opacity-80">
                     {p === 'Conservative' ? 'Preserve capital'
                       : p === 'Moderate' ? 'Balanced approach'
                       : 'Maximize returns'}
@@ -168,60 +178,39 @@ export default function BankerPage() {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               <span className="text-primary font-medium">{title}</span> — {desc}
             </p>
           </div>
 
           {/* Step 2: Investment Questions */}
-          <div className="border border-border rounded-lg p-5 bg-card space-y-5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold bg-primary/15 text-primary px-2 py-0.5 rounded-full">
-                STEP 2
-              </span>
-              <p className="text-[13px] font-semibold text-foreground">
-                "Someone's sitting in the shade today because someone planted a tree long ago."
-              </p>
-            </div>
+          <div data-reveal className="border border-border rounded-lg p-5 bg-card space-y-5 mb-6">
+            <p className="text-sm font-medium text-foreground italic">
+              "Someone's sitting in the shade today because someone planted a tree long ago."
+            </p>
 
             <div>
-              <p className="text-[11px] font-medium text-foreground mb-2">
+              <p className="text-sm font-medium text-foreground mb-2">
                 How long will this money stay invested?
               </p>
               <div className="flex flex-wrap gap-2">
                 {HORIZONS.map(h => (
-                  <button
-                    key={h.value}
-                    onClick={() => setHorizon(h.value)}
-                    className={`px-3 py-2 rounded-lg border text-left transition-all duration-150 cursor-pointer ${
-                      horizon === h.value
-                        ? 'bg-primary/10 border-primary/40 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/20 hover:text-foreground'
-                    }`}
-                  >
-                    <span className="text-[12px] font-medium">{h.label}</span>
+                  <button key={h.value} onClick={() => setHorizon(h.value)} className={chipClass(horizon === h.value)}>
+                    {h.label}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <p className="text-[11px] font-medium text-foreground mb-2">
+              <p className="text-sm font-medium text-foreground mb-2">
                 "Diversification is protection against ignorance." — How many funds?
               </p>
               <div className="flex flex-wrap gap-2">
                 {FUND_COUNTS.map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setFundCount(n)}
-                    className={`px-4 py-2 rounded-lg border transition-all duration-150 cursor-pointer ${
-                      fundCount === n
-                        ? 'bg-primary/10 border-primary/40 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/20 hover:text-foreground'
-                    }`}
-                  >
-                    <span className="text-[13px] font-semibold tabular-nums">{n}</span>
-                    <span className="text-[10px] ml-1.5 opacity-60">
+                  <button key={n} onClick={() => setFundCount(n)} className={chipClass(fundCount === n)}>
+                    <span className="font-mono font-semibold tabular-nums">{n}</span>
+                    <span className="ml-1.5 opacity-70 text-xs">
                       {n === 1 ? 'Concentrated'
                         : n <= 3 ? 'Focused'
                         : n <= 5 ? 'Balanced'
@@ -233,7 +222,7 @@ export default function BankerPage() {
             </div>
 
             <div>
-              <p className="text-[11px] font-medium text-foreground mb-2">
+              <p className="text-sm font-medium text-foreground mb-2">
                 How much do you plan to invest (₹)?
               </p>
               <input
@@ -241,25 +230,17 @@ export default function BankerPage() {
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="e.g. 50000"
-                className="w-full h-9 bg-muted border border-border rounded-lg px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div>
-              <p className="text-[11px] font-medium text-foreground mb-2">
+              <p className="text-sm font-medium text-foreground mb-2">
                 Investment interval
               </p>
               <div className="flex gap-2">
                 {['Monthly', 'Quarterly', 'Yearly', 'Lumpsum'].map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => setFrequency(opt)}
-                    className={`px-4 py-2 rounded-lg border transition-all duration-150 cursor-pointer text-[13px] font-medium ${
-                      frequency === opt
-                        ? 'bg-primary/10 border-primary/40 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/20 hover:text-foreground'
-                    }`}
-                  >
+                  <button key={opt} onClick={() => setFrequency(opt)} className={chipClass(frequency === opt)}>
                     {opt}
                   </button>
                 ))}
@@ -267,11 +248,11 @@ export default function BankerPage() {
             </div>
 
             <div>
-              <p className="text-[11px] font-medium text-foreground mb-2">
-                DeepSeek API key <span className="text-[10px] text-muted-foreground">(optional — AI analysis)</span>
+              <p className="text-sm font-medium text-foreground mb-2">
+                DeepSeek API key <span className="text-xs text-muted-foreground">(optional — AI analysis)</span>
               </p>
               {hasEnvKey() ? (
-                <p className="text-[12px] text-primary">
+                <p className="text-sm text-primary">
                   ✓ Detected from <span className="font-mono">VITE_DEEPSEEK_KEY</span>
                 </p>
               ) : (
@@ -281,19 +262,19 @@ export default function BankerPage() {
                     value={deepseekKey}
                     onChange={e => setDeepseekKey(e.target.value)}
                     placeholder="sk-..."
-                    className="flex-1 h-9 bg-muted border border-border rounded-lg px-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                    className="flex-1 h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
                   />
                   {keySaved ? (
                     <button
                       onClick={() => { clearApiKey(); setDeepseekKey(''); setKeySaved(false); setAiAnalysis(null) }}
-                      className="px-3 h-9 text-[12px] font-medium border border-border rounded-lg text-muted-foreground hover:text-destructive cursor-pointer shrink-0"
+                      className="px-3 h-10 text-sm font-medium border border-border rounded-md text-muted-foreground hover:text-destructive cursor-pointer shrink-0"
                     >
                       Remove
                     </button>
                   ) : (
                     <button
                       onClick={() => { if (deepseekKey) { setApiKey(deepseekKey); setKeySaved(true) } }}
-                      className="px-3 h-9 text-[12px] font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 cursor-pointer shrink-0"
+                      className="px-3 h-10 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-[var(--primary-hover)] cursor-pointer shrink-0"
                     >
                       Save
                     </button>
@@ -301,16 +282,16 @@ export default function BankerPage() {
                 </div>
               )}
               {keySaved && (
-                <p className="text-[10px] text-primary mt-1">API key saved — AI analysis runs after scan</p>
+                <p className="text-xs text-primary mt-1">API key saved — AI analysis runs after scan</p>
               )}
             </div>
           </div>
 
           <button
+            data-reveal
             onClick={startScan}
-            className="w-full py-4 rounded-lg font-semibold text-[14px] cursor-pointer transition-all duration-200
-              bg-primary text-primary-foreground hover:opacity-90"
-            style={{ boxShadow: '0 0 24px rgba(52, 211, 153, 0.2)' }}
+            className="w-full py-4 rounded-lg font-semibold text-sm cursor-pointer transition-colors duration-150
+              bg-primary text-primary-foreground hover:bg-[var(--primary-hover)]"
           >
             Seek the Oracle's Counsel →
           </button>
@@ -321,9 +302,9 @@ export default function BankerPage() {
       {step === 'scan' && (
         <>
           {topPicks.length > 0 && (
-            <div className="flex flex-wrap gap-2 text-[10px]">
+            <div data-reveal className="flex flex-wrap gap-2 text-xs mb-6">
               {[riskProfile, horizon, `${fundCount} funds`, frequency].map(tag => (
-                <span key={tag} className="px-2 py-1 rounded-full border border-border text-muted-foreground">
+                <span key={tag} className="px-2.5 py-1 rounded-full border border-border text-muted-foreground">
                   {tag}
                 </span>
               ))}
@@ -331,10 +312,10 @@ export default function BankerPage() {
           )}
 
           {isScanning && (
-            <div className="border border-border rounded-lg p-5 bg-card space-y-3">
+            <div data-reveal className="border border-border rounded-lg p-5 bg-card space-y-3 mb-6">
               <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-                <span className="text-[12px] text-foreground font-medium">
+                <span className="w-3 h-3 rounded-full bg-primary" style={{ animation: 'sxPulse 1.1s ease-in-out infinite' }} />
+                <span className="text-sm text-foreground font-medium">
                   The Oracle is analyzing {total} funds…
                 </span>
               </div>
@@ -342,19 +323,19 @@ export default function BankerPage() {
                 <div className="h-full rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${progress}%`, background: 'var(--primary)' }} />
               </div>
-              <p className="text-[10px] text-muted-foreground text-right">{progress}%</p>
+              <p className="text-xs text-muted-foreground text-right">{progress}%</p>
             </div>
           )}
 
           {/* Show results as soon as they appear */}
           {topPicks.length > 0 && (
             <div className={isScanning ? 'opacity-90' : ''}>
-              <div className="space-y-3">
+              <div data-reveal className="space-y-3 mb-6">
                 <div className="flex items-center gap-2">
-                  <p className="text-[13px] font-semibold text-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     The Oracle's Picks
                   </p>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Scored by Buffett's principles
                   </span>
                 </div>
@@ -367,40 +348,28 @@ export default function BankerPage() {
                       <button
                         key={scheme.c}
                         onClick={() => navigate(`/fund/${scheme.c}`)}
-                        className="border border-border rounded-lg p-4 bg-card text-left hover:border-primary/30 transition-all duration-200 cursor-pointer group"
+                        className="border border-border rounded-lg p-4 bg-card text-left hover:border-[var(--border-strong)] transition-colors duration-150 cursor-pointer group"
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-muted-foreground">
+                          <span className="text-xs font-mono text-muted-foreground">
                             #{idx + 1} of {fundCount}
                           </span>
-                          <span className="font-mono text-[11px] font-bold tabular-nums"
+                          <span className="font-mono text-xs font-bold tabular-nums"
                             style={{ color: scoreColor }}>
                             {Math.min(100, score).toFixed(1)}/100
                           </span>
                         </div>
-                        <p className="text-[12px] font-medium text-foreground leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                        <p className="text-sm font-medium text-foreground leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
                           {scheme.n.split(' — ')[0]}
                         </p>
                         <div className="flex flex-wrap gap-1 mb-2">
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-border text-muted-foreground">
+                          <span className="text-xs px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                             {scheme.g}
                           </span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                            style={{
-                              background: scheme.r === 0 ? 'var(--risk-low-bg)'
-                                : scheme.r === 1 ? 'var(--risk-mod-bg)'
-                                : scheme.r === 2 ? 'var(--risk-high-bg)'
-                                : 'var(--risk-vhigh-bg)',
-                              color: scheme.r === 0 ? 'var(--risk-low-fg)'
-                                : scheme.r === 1 ? 'var(--risk-mod-fg)'
-                                : scheme.r === 2 ? 'var(--risk-high-fg)'
-                                : 'var(--risk-vhigh-fg)',
-                            }}>
-                            {RISK_LABELS[scheme.r]}
-                          </span>
+                          <RiskBadge risk={scheme.r} />
                         </div>
                         {reasoning.length > 0 && (
-                          <div className="text-[9px] text-muted-foreground italic border-t border-border pt-2 mt-1">
+                          <div className="text-xs text-muted-foreground italic border-t border-border pt-2 mt-1">
                             {reasoning.map((r, i) => (
                               <p key={i}>◆ {r}</p>
                             ))}
@@ -409,28 +378,28 @@ export default function BankerPage() {
                         {stats && (
                           <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-2 border-t border-border mt-2">
                             <div>
-                              <span className="text-[9px] text-muted-foreground">1Y Return</span>
-                              <span className="block font-mono text-[12px] font-semibold tabular-nums"
+                              <span className="text-xs text-muted-foreground">1Y Return</span>
+                              <span className="block font-mono text-sm font-semibold tabular-nums"
                                 style={{ color: (stats.cagr1y ?? 0) >= 0 ? 'var(--delta-positive)' : 'var(--delta-negative)' }}>
                                 {pct(stats.cagr1y)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-[9px] text-muted-foreground">Sortino</span>
-                              <span className="block font-mono text-[12px] font-semibold tabular-nums text-foreground">
+                              <span className="text-xs text-muted-foreground">Sortino</span>
+                              <span className="block font-mono text-sm font-semibold tabular-nums text-foreground">
                                 {num(stats.sortino)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-[9px] text-muted-foreground">Max DD</span>
-                              <span className="block font-mono text-[12px] font-semibold tabular-nums"
+                              <span className="text-xs text-muted-foreground">Max DD</span>
+                              <span className="block font-mono text-sm font-semibold tabular-nums"
                                 style={{ color: 'var(--delta-negative)' }}>
                                 {pct(stats.maxDrawdown)}
                               </span>
                             </div>
                             <div>
-                              <span className="text-[9px] text-muted-foreground">Win Rate</span>
-                              <span className="block font-mono text-[12px] font-semibold tabular-nums text-foreground">
+                              <span className="text-xs text-muted-foreground">Win Rate</span>
+                              <span className="block font-mono text-sm font-semibold tabular-nums text-foreground">
                                 {(stats.winRate * 100).toFixed(0)}%
                               </span>
                             </div>
@@ -443,89 +412,88 @@ export default function BankerPage() {
               </div>
 
               {/* Principles panel */}
-              <div className="space-y-3">
-                <p className="text-[11px] font-semibold text-foreground">The Oracle's Principles</p>
-                <div className="space-y-2">
-                  {PRINCIPLES.slice(0, 5).map((p, i) => (
-                    <div key={i} className="border border-border rounded-lg p-3 bg-card space-y-1"
-                      style={{ borderColor: 'rgba(52,211,153,0.1)' }}>
-                      <p className="text-[11px] font-medium text-primary">{p.name}</p>
-                      <p className="text-[10px] text-muted-foreground italic">"{p.quote}"</p>
-                      <p className="text-[9px] text-muted-foreground leading-relaxed">{p.rule}</p>
-                    </div>
-                  ))}
+              <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-foreground">The Oracle's Principles</p>
+                  <div className="space-y-2">
+                    {PRINCIPLES.slice(0, 5).map((p, i) => (
+                      <div key={i} className="border border-border rounded-lg p-3 bg-card space-y-1">
+                        <p className="text-sm font-medium text-primary">{p.name}</p>
+                        <p className="text-xs text-muted-foreground italic">"{p.quote}"</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{p.rule}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Oracle's critique */}
                 {wisdom.length > 0 && (
-                  <div className="border border-border rounded-lg p-3 bg-card space-y-2"
-                    style={{ borderColor: 'rgba(52,211,153,0.2)' }}>
-                    <p className="text-[10px] font-medium text-primary uppercase tracking-wider">
-                      The Oracle Observes
-                    </p>
-                    {wisdom.map((w, i) => (
-                      <div key={i} className="flex items-start gap-1.5">
-                        <span className="text-[9px] text-primary mt-0.5">◆</span>
-                        <p className="text-[10px] text-foreground leading-relaxed">{w}</p>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-foreground">The Oracle Observes</p>
+                    <div className="border border-border rounded-lg p-4 bg-card space-y-2">
+                      {wisdom.map((w, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="text-xs text-primary mt-0.5">◆</span>
+                          <p className="text-sm text-foreground leading-relaxed">{w}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-              </div>
-            )}
 
-            {aiAnalysis && (
-              <div className="border border-border rounded-lg p-4 bg-card mt-4"
-                style={{ borderColor: 'rgba(52,211,153,0.2)' }}>
-                <p className="text-[10px] font-medium text-primary uppercase tracking-wider mb-2">
-                  🤖 DeepSeek Analysis
-                </p>
-                <p className="text-[12px] text-foreground leading-relaxed whitespace-pre-wrap">
-                  {aiAnalysis}
-                </p>
-              </div>
-            )}
+              {aiAnalysis && (
+                <div data-reveal className="border border-border rounded-lg p-4 bg-card mb-6">
+                  <p className="text-xs font-medium text-primary uppercase tracking-wider mb-2">
+                    🤖 DeepSeek Analysis
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                    {aiAnalysis}
+                  </p>
+                </div>
+              )}
 
-            {getApiKey() && !aiAnalysis && topPicks.length > 0 && (
-              <div className="text-center pt-1">
-                <button
-                  onClick={async () => {
-                    setAiLoading(true)
-                    try {
-                      const funds = topPicks.map(p => ({
-                        name: p.scheme.n.split(' — ')[0],
-                        score: p.score,
-                        category: p.scheme.g,
-                      }))
-                      const analysis = await analyzePortfolio(funds, investProfile)
-                      setAiAnalysis(analysis)
-                    } catch (e: any) {
-                      setAiAnalysis(`Analysis unavailable: ${e.message}`)
-                    } finally {
-                      setAiLoading(false)
-                    }
-                  }}
-                  disabled={aiLoading}
-                  className="px-6 py-2 rounded-lg border border-primary/30 text-[12px] font-medium text-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer disabled:opacity-50"
-                >
-                  {aiLoading ? 'Analyzing…' : '🤖 Run AI Analysis'}
-                </button>
-              </div>
-            )}
+              {getApiKey() && !aiAnalysis && topPicks.length > 0 && (
+                <div className="text-center pt-1 mb-6">
+                  <button
+                    onClick={async () => {
+                      setAiLoading(true)
+                      try {
+                        const funds = topPicks.map(p => ({
+                          name: p.scheme.n.split(' — ')[0],
+                          score: p.score,
+                          category: p.scheme.g,
+                        }))
+                        const analysis = await analyzePortfolio(funds, investProfile)
+                        setAiAnalysis(analysis)
+                      } catch (e: any) {
+                        setAiAnalysis(`Analysis unavailable: ${e.message}`)
+                      } finally {
+                        setAiLoading(false)
+                      }
+                    }}
+                    disabled={aiLoading}
+                    className="px-6 py-2 rounded-md border border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors duration-150 cursor-pointer disabled:opacity-50"
+                  >
+                    {aiLoading ? 'Analyzing…' : '🤖 Run AI Analysis'}
+                  </button>
+                </div>
+              )}
 
-            <p className="text-center text-[10px] text-muted-foreground pt-2">
-              Algorithmic interpretation · Not financial advice
-            </p>
+              <p className="text-center text-xs text-muted-foreground pt-2">
+                Algorithmic interpretation · Not financial advice
+              </p>
 
-          {topPicks.length > 0 && (
-            <div className="text-center pt-1">
-              <button
-                onClick={() => setRescanKey(k => k + 1)}
-                className="px-6 py-2 rounded-lg border border-border text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200 cursor-pointer"
-              >
-                ↻ Re-scan
-              </button>
+              {topPicks.length > 0 && (
+                <div className="text-center pt-1">
+                  <button
+                    onClick={() => setRescanKey(k => k + 1)}
+                    className="px-6 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-[var(--border-strong)] transition-colors duration-150 cursor-pointer"
+                  >
+                    ↻ Re-scan
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </>

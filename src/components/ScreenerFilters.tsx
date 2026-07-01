@@ -39,11 +39,11 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-foreground">Filters</p>
+        <p className="text-sm font-semibold text-foreground">Filters</p>
         {hasFilters && (
           <button
             onClick={() => emit([], [], '')}
-            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
           >
             Clear
           </button>
@@ -51,13 +51,13 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
       </div>
 
       <div>
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Fund House
         </p>
         <select
           value={house}
           onChange={e => emit(undefined, undefined, e.target.value)}
-          className="w-full h-8 bg-muted border border-border rounded-md px-2 text-[12px] text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full h-8 bg-muted border border-border rounded-md px-2 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="">All Houses</option>
           {fundHouses.filter(h => h.length > 1).map(h => (
@@ -67,7 +67,7 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
       </div>
 
       <div>
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Risk Level
         </p>
         <div className="flex flex-col gap-1.5">
@@ -75,10 +75,10 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
             <button
               key={r}
               onClick={() => emit(undefined, toggle(risks, r, setRisks))}
-              className={`text-left text-[11px] px-2.5 py-1.5 rounded-md border transition-all duration-150 cursor-pointer ${
+              className={`text-left text-sm px-2.5 py-1.5 rounded-md border transition-colors duration-150 cursor-pointer ${
                 risks.includes(r)
-                  ? 'bg-primary/15 border-primary/40 text-primary'
-                  : 'border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
+                  ? 'bg-primary/10 border-primary text-primary'
+                  : 'border-border text-muted-foreground hover:border-[var(--border-strong)] hover:text-foreground'
               }`}
             >
               {r}
@@ -88,7 +88,7 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
       </div>
 
       <div>
-        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Category
         </p>
         <div className="flex flex-col gap-1 max-h-[50vh] overflow-y-auto">
@@ -96,10 +96,10 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
             <button
               key={c}
               onClick={() => emit(toggle(cats, c, setCats))}
-              className={`text-left text-[11px] px-2.5 py-1.5 rounded-md border transition-all duration-150 cursor-pointer ${
+              className={`text-left text-sm px-2.5 py-1.5 rounded-md border transition-colors duration-150 cursor-pointer ${
                 cats.includes(c)
-                  ? 'bg-primary/15 border-primary/40 text-primary'
-                  : 'border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
+                  ? 'bg-primary/10 border-primary text-primary'
+                  : 'border-border text-muted-foreground hover:border-[var(--border-strong)] hover:text-foreground'
               }`}
             >
               {c}

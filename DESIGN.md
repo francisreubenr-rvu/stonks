@@ -322,6 +322,25 @@ Forbidden:  translate/slide on hover, scale/bounce, spring physics, parallax, lo
 
 `prefers-reduced-motion: reduce` → disable all non-essential transitions.
 
+### 7.1 Data-reveal exception
+
+Two additional one-shot, scroll-triggered motions are in use across the app —
+carried over deliberately from a design pass and kept as a scoped exception to
+the "no translate, no looping animation" rule above:
+
+- **Scroll reveal** — `data-reveal` elements fade in + translateY(16px→0) once
+  when they first enter the viewport (`useScrollReveal`).
+- **Count-up** — `data-countup data-target="…"` numeric values animate from 0
+  to their real target once, on first scroll-into-view (`useCountUp`). Targets
+  are always real values (live index levels, real fund/portfolio figures) —
+  never fabricated.
+
+These are strictly one-shot (never loop, never re-trigger), respect
+`prefers-reduced-motion: reduce` (skip straight to the end state), and exist
+only for the "content arrives" moment — not for hover/interaction feedback,
+which still follows the color/opacity-only rule above. Implemented in
+`src/hooks/useScrollReveal.ts`, `useCountUp.ts` (composed via `useSxEffects.ts`).
+
 ---
 
 ## 8. Accessibility (WCAG 2.1 AA)

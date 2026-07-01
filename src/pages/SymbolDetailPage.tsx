@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSymbolDetail } from '@/hooks/useSymbolDetail'
+import { useSxEffects } from '@/hooks/useSxEffects'
 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
@@ -50,6 +51,7 @@ export default function SymbolDetailPage() {
   const { symbolId } = useParams<{ symbolId: string }>()
   const navigate = useNavigate()
   const { data: queryData, isLoading, error } = useSymbolDetail(symbolId ?? '')
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   if (isLoading) return <LoadingSkeleton />
   if (error || !queryData) return (
@@ -71,9 +73,9 @@ export default function SymbolDetailPage() {
   const minClose = closes.length > 0 ? Math.min(...closes) : 0
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div ref={rootRef} className="space-y-5 max-w-2xl">
       {/* Symbol header card */}
-      <div className="border border-border rounded-lg p-6 bg-card space-y-1">
+      <div data-reveal className="border border-border rounded-lg p-6 bg-card space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
           <h2 className="font-mono text-2xl font-bold text-foreground tracking-tight">
             {quote.symbol}
@@ -104,7 +106,7 @@ export default function SymbolDetailPage() {
             Vol: {quote.volume.toLocaleString('en-IN')}
           </p>
           {isFallback && (
-            <span className="font-mono text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <span className="font-mono text-[10px] font-medium px-1.5 py-0.5 rounded border" style={{ borderColor: 'var(--risk-mod-border)', background: 'var(--risk-mod-bg)', color: 'var(--risk-mod-fg)' }}>
               using cached data
             </span>
           )}
@@ -113,7 +115,7 @@ export default function SymbolDetailPage() {
 
       {/* EOD chart */}
       {eodBars.length > 0 && (
-        <div className="border border-border rounded-lg p-4 bg-card">
+        <div data-reveal className="border border-border rounded-lg p-4 bg-card">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
               30-Day Price
@@ -153,7 +155,7 @@ export default function SymbolDetailPage() {
 
       {/* Fundamentals */}
       {fundamentals && (
-        <div className="border border-border rounded-lg bg-card">
+        <div data-reveal className="border border-border rounded-lg bg-card">
           <div className="px-6 py-3 border-b border-border">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
               Fundamentals

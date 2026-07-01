@@ -32,8 +32,7 @@ export function NavigationBar({ loading }: Props) {
         className="h-full transition-all duration-300 ease-out"
         style={{
           width: `${width}%`,
-          background: 'linear-gradient(90deg, var(--primary), #6EE7B7)',
-          boxShadow: '0 0 6px rgba(52, 211, 153, 0.4)',
+          background: 'var(--primary)',
           opacity: loading ? 1 : 0,
         }}
       />

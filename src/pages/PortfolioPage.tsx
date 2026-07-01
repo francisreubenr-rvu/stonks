@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchMultipleWithFallback } from '@/api/backupClient'
 import { NS } from '@/lib/symbols'
 import type { Holding, PortfolioItem } from '@/api/dataTypes'
+import { useSxEffects } from '@/hooks/useSxEffects'
+import { SectionEyebrow } from '@/components/SectionEyebrow'
 
 const STORAGE_KEY = 'stonks:portfolio'
 
@@ -24,12 +26,13 @@ export default function PortfolioPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<Holding>({ symbol: '', name: '', quantity: 0, buyPrice: 0, buyDate: '' })
 
-  const { data: quotes } = useQuery({
+  const { data: quotes, isLoading } = useQuery({
     queryKey: ['portfolioQuotes', ...holdings.map(h => h.symbol)],
     queryFn: () => fetchMultipleWithFallback(holdings.map(h => `${h.symbol}${NS}`)),
     enabled: holdings.length > 0,
     staleTime: 60_000,
   })
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   const portfolio = useMemo<PortfolioItem[]>(() => {
     return holdings.map(h => {
@@ -81,19 +84,19 @@ export default function PortfolioPage() {
 
   if (holdings.length === 0 && !showForm) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-foreground">Portfolio</h2>
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <SectionEyebrow eyebrow="Holdings" title="Portfolio" />
           <button
             onClick={() => setShowForm(true)}
-            className="text-[12px] font-medium px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors cursor-pointer"
+            className="h-9 text-sm font-medium px-4 bg-primary text-primary-foreground rounded-md hover:bg-[var(--primary-hover)] transition-colors cursor-pointer"
           >
             + Add Holding
           </button>
         </div>
         <div className="border border-border rounded-lg bg-card py-16 text-center space-y-2">
-          <p className="text-[13px] text-muted-foreground">No holdings yet</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">No holdings yet</p>
+          <p className="text-xs text-muted-foreground">
             Track your portfolio by adding your holdings manually.
           </p>
         </div>
@@ -104,19 +107,19 @@ export default function PortfolioPage() {
   const pos = totalPnl >= 0
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-foreground">Portfolio</h2>
+    <div ref={rootRef}>
+      <div data-reveal className="flex items-center justify-between mb-6">
+        <SectionEyebrow eyebrow="Holdings" title="Portfolio" />
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-[12px] font-medium px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors cursor-pointer"
+          className="h-9 text-sm font-medium px-4 bg-primary text-primary-foreground rounded-md hover:bg-[var(--primary-hover)] transition-colors cursor-pointer"
         >
           + Add
         </button>
       </div>
 
       {showForm && (
-        <div className="border border-border rounded-lg p-4 bg-card grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div data-reveal className="border border-border rounded-lg p-4 bg-card grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           <input
             placeholder="Symbol (e.g. RELIANCE)"
             value={form.symbol}
@@ -152,7 +155,7 @@ export default function PortfolioPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+      <div data-reveal className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
         <div className="border border-border rounded-lg p-3 bg-card">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Invested</p>
           <p className="font-mono text-lg font-semibold text-foreground">₹{totals.invested.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
@@ -178,7 +181,7 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      <div className="border border-border rounded-md overflow-hidden bg-card">
+      <div data-reveal className="border border-border rounded-md overflow-hidden bg-card">
         <div className="grid grid-cols-[1fr_80px_100px_100px_100px_100px_40px] bg-muted border-b border-border px-4 py-2.5">
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Symbol</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Qty</span>

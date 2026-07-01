@@ -1,4 +1,8 @@
 import { useDashboard } from '@/hooks/useDashboard'
+import { useSxEffects } from '@/hooks/useSxEffects'
+import { SectionEyebrow } from '@/components/SectionEyebrow'
+import { IndexCard } from '@/components/IndexCard'
+import { NewsTicker } from '@/components/NewsTicker'
 
 function Skeleton() {
   return (
@@ -18,6 +22,7 @@ function Skeleton() {
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useDashboard()
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   if (isLoading) return <Skeleton />
   if (error) return <p className="text-sm text-destructive">{error?.message}</p>
@@ -25,44 +30,57 @@ export default function DashboardPage() {
 
   const hasAllZeros = data.indices.length > 0 && data.indices.every(i => i.value === 0 && i.change === 0 && i.changePct === 0)
 
+  // Real gainers/losers drive the scrolling ticker — no fabricated headlines.
+  const tickerItems = [
+    ...data.gainers.slice(0, 3).map(g => ({ tag: 'GAINER', text: `${g.symbol} ${g.name} +${g.changePct.toFixed(2)}%` })),
+    ...data.losers.slice(0, 3).map(l => ({ tag: 'LOSER', text: `${l.symbol} ${l.name} ${l.changePct.toFixed(2)}%` })),
+    ...data.sectors.slice(0, 3).map(s => ({ tag: 'SECTOR', text: `${s.name} ${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(2)}%` })),
+  ]
+
   return (
-    <div className="space-y-6">
+    <div ref={rootRef}>
       {hasAllZeros && (
-        <div className="px-4 py-2 rounded-lg border border-border bg-card text-[11px] text-muted-foreground">
+        <div className="px-4 py-2 rounded-lg border border-border bg-card text-xs text-muted-foreground mb-6">
           📡 Using cached data — live feed temporarily unavailable
         </div>
       )}
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-[15px] font-semibold text-foreground">Market Dashboard</h2>
-        <p className="text-[11px] text-muted-foreground font-mono">
-          Updated {new Date(data.lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-        </p>
+
+      <div data-reveal>
+        <SectionEyebrow
+          eyebrow="Market Overview"
+          title="Good session, let's see the tape"
+          aside={
+            <span className="font-mono text-sm text-muted-foreground inline-flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Updated {new Date(data.lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          }
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {data.indices.slice(0, 4).map(idx => {
+      <div data-reveal>
+        <NewsTicker items={tickerItems} />
+      </div>
+
+      <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {data.indices.slice(0, 4).map((idx) => {
           const pos = idx.change >= 0
           return (
-            <div key={idx.symbol} className="border border-border rounded-lg p-4 bg-card space-y-1">
-              <p className="font-mono text-[11px] font-medium text-muted-foreground">{idx.symbol}</p>
-              <p className="font-mono text-xl font-semibold text-foreground tabular-nums">
-                {idx.value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-              </p>
-              <p
-                className="font-mono text-[12px] tabular-nums"
-                style={{ color: pos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
-              >
-                {pos ? '+' : ''}{idx.change.toFixed(2)} ({pos ? '+' : ''}{idx.changePct.toFixed(2)}%)
-              </p>
-            </div>
+            <IndexCard
+              key={idx.symbol}
+              name={idx.symbol}
+              value={idx.value}
+              pctStr={`${pos ? '+' : ''}${idx.changePct.toFixed(2)}%`}
+              positive={pos}
+            />
           )
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div data-reveal className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="border border-border rounded-lg bg-card">
           <div className="px-5 py-3 border-b border-border">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
               All Indices
             </p>
           </div>
@@ -72,15 +90,15 @@ export default function DashboardPage() {
               return (
                 <div key={idx.symbol} className="flex items-center justify-between px-5 py-2.5">
                   <div>
-                    <p className="text-[13px] font-medium text-foreground">{idx.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{idx.symbol}</p>
+                    <p className="text-sm font-medium text-foreground">{idx.name}</p>
+                    <p className="text-xs text-muted-foreground">{idx.symbol}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-[13px] font-semibold text-foreground tabular-nums">
+                    <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
                       {idx.value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                     </p>
                     <p
-                      className="font-mono text-[11px] tabular-nums"
+                      className="font-mono text-xs tabular-nums"
                       style={{ color: pos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
                     >
                       {pos ? '▲' : '▼'} {Math.abs(idx.changePct).toFixed(2)}%
@@ -94,7 +112,7 @@ export default function DashboardPage() {
 
         <div className="border border-border rounded-lg bg-card">
           <div className="px-5 py-3 border-b border-border">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
               Market Breadth
             </p>
           </div>
@@ -104,45 +122,43 @@ export default function DashboardPage() {
                 <p className="font-mono text-2xl font-semibold" style={{ color: 'var(--delta-positive)' }}>
                   {data.advanceDecline.advances}
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-1">Advances</p>
+                <p className="text-xs text-muted-foreground mt-1">Advances</p>
               </div>
               <div className="text-center">
                 <p className="font-mono text-2xl font-semibold text-muted-foreground">
                   {data.advanceDecline.unchanged}
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-1">Unchanged</p>
+                <p className="text-xs text-muted-foreground mt-1">Unchanged</p>
               </div>
               <div className="text-center">
                 <p className="font-mono text-2xl font-semibold" style={{ color: 'var(--delta-negative)' }}>
                   {data.advanceDecline.declines}
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-1">Declines</p>
+                <p className="text-xs text-muted-foreground mt-1">Declines</p>
               </div>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden flex">
               {data.advanceDecline.advances + data.advanceDecline.declines + data.advanceDecline.unchanged > 0 && (
                 <>
                   <div
-                    className="h-full transition-all duration-700"
+                    className="h-full"
                     style={{
                       width: `${(data.advanceDecline.advances / (data.advanceDecline.advances + data.advanceDecline.declines + data.advanceDecline.unchanged)) * 100}%`,
                       background: 'var(--delta-positive)',
-                      opacity: 0.7,
                     }}
                   />
                   <div
-                    className="h-full transition-all duration-700"
+                    className="h-full"
                     style={{
                       width: `${(data.advanceDecline.unchanged / (data.advanceDecline.advances + data.advanceDecline.declines + data.advanceDecline.unchanged)) * 100}%`,
                       background: 'var(--border-strong)',
                     }}
                   />
                   <div
-                    className="h-full transition-all duration-700"
+                    className="h-full"
                     style={{
                       width: `${(data.advanceDecline.declines / (data.advanceDecline.advances + data.advanceDecline.declines + data.advanceDecline.unchanged)) * 100}%`,
                       background: 'var(--delta-negative)',
-                      opacity: 0.7,
                     }}
                   />
                 </>
@@ -153,10 +169,10 @@ export default function DashboardPage() {
       </div>
 
       {data.sectors.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div data-reveal className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="border border-border rounded-lg bg-card">
             <div className="px-5 py-3 border-b border-border">
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
                 Sector Performance
               </p>
             </div>
@@ -165,9 +181,9 @@ export default function DashboardPage() {
                 const pos = s.changePct >= 0
                 return (
                   <div key={s.name} className="flex items-center justify-between px-5 py-2.5">
-                    <span className="text-[13px] font-medium text-foreground">{s.name}</span>
+                    <span className="text-sm font-medium text-foreground">{s.name}</span>
                     <span
-                      className="font-mono text-[13px] font-semibold tabular-nums"
+                      className="font-mono text-sm font-semibold tabular-nums"
                       style={{ color: pos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
                     >
                       {pos ? '+' : ''}{s.changePct.toFixed(2)}%
@@ -182,7 +198,7 @@ export default function DashboardPage() {
             {data.gainers.length > 0 && (
               <div className="border border-border rounded-lg bg-card">
                 <div className="px-5 py-3 border-b border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest"
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest"
                     style={{ color: 'var(--delta-positive)' }}>
                     Top Gainers
                   </p>
@@ -191,10 +207,10 @@ export default function DashboardPage() {
                   {data.gainers.map(g => (
                     <div key={g.symbol} className="flex items-center justify-between px-5 py-2.5">
                       <div>
-                        <span className="font-mono text-[12px] font-medium text-foreground">{g.symbol}</span>
-                        <span className="text-[10px] text-muted-foreground ml-2">{g.name}</span>
+                        <span className="font-mono text-xs font-medium text-foreground">{g.symbol}</span>
+                        <span className="text-xs text-muted-foreground ml-2">{g.name}</span>
                       </div>
-                      <span className="font-mono text-[13px] font-semibold tabular-nums" style={{ color: 'var(--delta-positive)' }}>
+                      <span className="font-mono text-sm font-semibold tabular-nums" style={{ color: 'var(--delta-positive)' }}>
                         +{g.changePct.toFixed(2)}%
                       </span>
                     </div>
@@ -205,7 +221,7 @@ export default function DashboardPage() {
             {data.losers.length > 0 && (
               <div className="border border-border rounded-lg bg-card">
                 <div className="px-5 py-3 border-b border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest"
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest"
                     style={{ color: 'var(--delta-negative)' }}>
                     Top Losers
                   </p>
@@ -214,10 +230,10 @@ export default function DashboardPage() {
                   {data.losers.map(l => (
                     <div key={l.symbol} className="flex items-center justify-between px-5 py-2.5">
                       <div>
-                        <span className="font-mono text-[12px] font-medium text-foreground">{l.symbol}</span>
-                        <span className="text-[10px] text-muted-foreground ml-2">{l.name}</span>
+                        <span className="font-mono text-xs font-medium text-foreground">{l.symbol}</span>
+                        <span className="text-xs text-muted-foreground ml-2">{l.name}</span>
                       </div>
-                      <span className="font-mono text-[13px] font-semibold tabular-nums" style={{ color: 'var(--delta-negative)' }}>
+                      <span className="font-mono text-sm font-semibold tabular-nums" style={{ color: 'var(--delta-negative)' }}>
                         {l.changePct.toFixed(2)}%
                       </span>
                     </div>

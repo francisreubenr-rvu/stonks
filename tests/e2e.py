@@ -24,9 +24,10 @@ def test_dashboard(page):
     print('\n═══ DASHBOARD ═══')
     page.goto(f'{BASE}/#/dashboard')
     page.wait_for_load_state('networkidle')
-    page.wait_for_timeout(4000)
+    page.wait_for_selector("text=Good session, let's see the tape", timeout=15000)
+    page.wait_for_timeout(1000)
     body = page.text_content('body') or ''
-    ok('Market Dashboard' in body, 'Heading present')
+    ok("Good session, let's see the tape" in body, 'Heading present')
     ok('NIFTY 50' in body or 'SENSEX' in body, 'Index data')
     ok(len(body) > 500, 'Page has content')
     cards = page.locator('.rounded-lg.border.bg-card').all()
@@ -40,7 +41,8 @@ def test_funds(page):
     page.wait_for_timeout(1000)
     body = page.text_content('body') or ''
     ok('Mutual Funds' in body, 'Funds heading')
-    ok('of 37' in body or 'of 3' in body or 'schemes' in body, 'Scheme count')
+    import re
+    ok(re.search(r'[\d,]+ of [\d,]+', body) is not None, 'Scheme count')
     ok('Filters' in body or 'Fund House' in body, 'Filter panel')
 
     # Search test
@@ -84,11 +86,11 @@ def test_fund_detail(page):
 def test_indices(page):
     print('\n═══ INDICES ═══')
     page.goto(f'{BASE}/#/indices')
-    page.wait_for_selector('text=Market Indices', timeout=15000)
+    page.wait_for_selector('text=Every index, drawn live', timeout=15000)
     page.wait_for_timeout(2000)
     body = page.text_content('body') or ''
-    ok('Market Indices' in body, 'Heading')
-    cards = page.locator('.rounded-md.border').all()
+    ok('Every index, drawn live' in body, 'Heading')
+    cards = page.locator('.rounded-lg.border').all()
     ok(len(cards) > 3, f'{len(cards)} index cards')
 
 def test_compare(page):
@@ -146,8 +148,8 @@ def test_banker(page):
     page.wait_for_timeout(5000)
     body = page.text_content('body') or ''
     ok('Oracle of Omaha' in body, 'Oracle header')
-    ok('STEP 1' in body, 'Step 1 visible')
-    ok('STEP 2' in body, 'Step 2 visible')
+    ok('tolerance for temporary market declines' in body, 'Risk profile question visible')
+    ok('How long will this money stay invested' in body, 'Horizon question visible')
     ok('Seek the Oracle' in body, 'Scan button')
 
     # Select fundCount=2 and scan

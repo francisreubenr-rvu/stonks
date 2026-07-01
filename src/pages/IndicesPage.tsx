@@ -1,4 +1,7 @@
 import { useIndicesSnapshot } from '@/hooks/useIndicesSnapshot'
+import { useSxEffects } from '@/hooks/useSxEffects'
+import { SectionEyebrow } from '@/components/SectionEyebrow'
+import { IndexCard } from '@/components/IndexCard'
 
 function SkeletonCard() {
   return (
@@ -16,6 +19,7 @@ function SkeletonCard() {
 
 export default function IndicesPage() {
   const { data, isLoading, error } = useIndicesSnapshot()
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   if (isLoading) return (
     <div className="space-y-4">
@@ -30,49 +34,27 @@ export default function IndicesPage() {
   const hasAllZeros = data && data.length > 0 && data.every(i => i.value === 0 && i.change === 0 && i.changePct === 0)
 
   return (
-    <div className="space-y-4">
+    <div ref={rootRef}>
       {hasAllZeros && (
-        <div className="px-4 py-2 rounded-lg border border-border bg-card text-[11px] text-muted-foreground">
+        <div className="px-4 py-2 rounded-lg border border-border bg-card text-xs text-muted-foreground mb-6">
           📡 Using cached data — live feed temporarily unavailable
         </div>
       )}
-      <h2 className="text-[15px] font-semibold text-foreground">Market Indices</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {data?.map(idx => {
+      <div data-reveal>
+        <SectionEyebrow eyebrow="Market Pulse" title="Every index, drawn live" />
+      </div>
+      <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {data?.map((idx) => {
           const pos = idx.change >= 0
           return (
-            <div
+            <IndexCard
               key={idx.symbol}
-              className="border border-border rounded-md p-4 bg-card space-y-1.5 hover:border-[var(--border-strong)] transition-colors duration-150"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[11px] font-medium text-muted-foreground tracking-wide">
-                  {idx.symbol}
-                </span>
-                <span
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                  style={pos
-                    ? { background: 'var(--delta-positive-bg)', color: 'var(--delta-positive)' }
-                    : { background: 'var(--delta-negative-bg)', color: 'var(--delta-negative)' }
-                  }
-                >
-                  {pos ? '▲' : '▼'}
-                </span>
-              </div>
-              <p className="text-[13px] text-muted-foreground">{idx.name}</p>
-              <p className="font-mono text-xl font-semibold text-foreground tabular-nums tracking-tight">
-                {idx.value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-              </p>
-              <p
-                className="font-mono text-[13px] tabular-nums"
-                style={{ color: pos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
-              >
-                {pos ? '+' : ''}{idx.change.toFixed(2)}{' '}
-                <span className="opacity-75 text-xs">
-                  ({pos ? '+' : ''}{idx.changePct.toFixed(2)}%)
-                </span>
-              </p>
-            </div>
+              name={idx.name}
+              value={idx.value}
+              pctStr={`${pos ? '+' : ''}${idx.changePct.toFixed(2)}%`}
+              positive={pos}
+              size="lg"
+            />
           )
         })}
       </div>

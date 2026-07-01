@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useCompareSet } from '@/hooks/useCompareSet'
+import { useSxEffects } from '@/hooks/useSxEffects'
+import { SectionEyebrow } from '@/components/SectionEyebrow'
 
 function EmptyState() {
   return (
@@ -17,18 +19,22 @@ export default function WatchlistPage() {
   const navigate = useNavigate()
   const { items, remove } = useWatchlist()
   const symbols = items.filter(i => i.type !== 'fund').map(i => i.symbol)
-  const { data: quotes } = useCompareSet(symbols)
+  const { data: quotes, isLoading } = useCompareSet(symbols)
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   if (items.length === 0) return <EmptyState />
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-[15px] font-semibold text-foreground">Watchlist</h2>
-        <p className="text-[11px] text-muted-foreground">{items.length} items</p>
+    <div ref={rootRef}>
+      <div data-reveal>
+        <SectionEyebrow
+          eyebrow="Tracked"
+          title="Watchlist"
+          aside={<span className="text-sm text-muted-foreground">{items.length} items</span>}
+        />
       </div>
 
-      <div className="border border-border rounded-md overflow-hidden bg-card">
+      <div data-reveal className="border border-border rounded-md overflow-hidden bg-card">
         <div className="grid grid-cols-[1fr_120px_120px_48px] bg-muted border-b border-border px-4 py-2.5">
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Symbol</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Price</span>

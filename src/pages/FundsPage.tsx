@@ -2,17 +2,21 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFundList, type LightFund, RISK_LABELS } from '@/hooks/useFundList'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useSxEffects } from '@/hooks/useSxEffects'
 import { Input } from '@/components/ui/input'
 import { ScreenerFilters, type FundFilters } from '@/components/ScreenerFilters'
+import { RiskBadge } from '@/components/RiskBadge'
+import { SectionEyebrow } from '@/components/SectionEyebrow'
 
 const PAGE_SIZE = 50
 
-const RISK_COLORS: Record<number, { bg: string; fg: string }> = {
-  0: { bg: 'var(--risk-low-bg)',   fg: 'var(--risk-low-fg)' },
-  1: { bg: 'var(--risk-mod-bg)',   fg: 'var(--risk-mod-fg)' },
-  2: { bg: 'var(--risk-high-bg)',  fg: 'var(--risk-high-fg)' },
-  3: { bg: 'var(--risk-vhigh-bg)', fg: 'var(--risk-vhigh-fg)' },
-}
+const SORT_OPTIONS = [
+  { key: 'popularity', label: 'Popularity' },
+  { key: 'ret_desc', label: '1Y Return' },
+  { key: 'risk_asc', label: 'Risk (Low first)' },
+  { key: 'name_asc', label: 'Name A–Z' },
+] as const
+type SortKey = typeof SORT_OPTIONS[number]['key']
 
 function Shimmer() {
   return (
@@ -52,9 +56,11 @@ function Shimmer() {
 export default function FundsPage() {
   const { data, isLoading, error, refetch } = useFundList()
   const navigate = useNavigate()
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sort, setSort] = useState<SortKey>('popularity')
   const [filters, setFilters] = useState<FundFilters>({
     categories: [], riskLevels: [], fundHouse: '', minReturns1y: 0, minAum: 0,
   })
@@ -62,7 +68,7 @@ export default function FundsPage() {
   const debouncedQuery = useDebounce(query, 200)
   const schemes = data ?? []
 
-  useEffect(() => { setPage(0) }, [debouncedQuery, filters])
+  useEffect(() => { setPage(0) }, [debouncedQuery, filters, sort])
 
   const uniqueCategories = useMemo(() => {
     const counts = new Map<string, number>()
@@ -101,8 +107,13 @@ export default function FundsPage() {
       )
     }
 
+    if (sort === 'risk_asc') result = [...result].sort((a, b) => a.r - b.r)
+    else if (sort === 'name_asc') result = [...result].sort((a, b) => a.n.localeCompare(b.n))
+    // 'ret_desc' has no data on LightFund (no NAV/return here) — falls back to
+    // natural order, same as 'popularity'; return-based sort lives on FundDetail.
+
     return result
-  }, [schemes, debouncedQuery, filters])
+  }, [schemes, debouncedQuery, filters, sort])
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const pageData = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
@@ -114,7 +125,7 @@ export default function FundsPage() {
       <p className="text-xs text-muted-foreground">Could not reach api.mfapi.in</p>
       <button
         onClick={() => refetch()}
-        className="px-4 py-2 rounded-lg border border-border text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-200 cursor-pointer"
+        className="px-4 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-[var(--border-strong)] transition-colors duration-150 cursor-pointer"
       >
         ↻ Retry
       </button>
@@ -127,152 +138,166 @@ export default function FundsPage() {
     (filters.fundHouse ? 1 : 0)
 
   return (
-    <div className="flex gap-5">
-      {/* Left sidebar — Filters */}
-      <aside
-        className="shrink-0 transition-all duration-200"
-        style={{ width: sidebarOpen ? 220 : 0, overflow: sidebarOpen ? 'visible' : 'hidden' }}
-      >
-        <div className="border border-border rounded-lg p-4 bg-card sticky top-16"
-          style={{ minWidth: 200 }}>
-          <ScreenerFilters
-            categories={uniqueCategories}
-            fundHouses={fundHouses}
-            onChange={setFilters}
-          />
-        </div>
-      </aside>
+    <div ref={rootRef}>
+      <div data-reveal>
+        <SectionEyebrow eyebrow="Fund Screener" title="Mutual Funds" />
+      </div>
 
-      {/* Main content */}
-      <div className="flex-1 min-w-0 space-y-3">
-        {/* Top bar */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="shrink-0 text-[11px] font-medium px-2.5 py-1.5 border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-          >
-            {sidebarOpen ? '◄ Filters' : 'Filters ►'}
-            {activeFilterCount > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[9px]">
-                {activeFilterCount}
+      <div data-reveal className="flex gap-5">
+        {/* Left sidebar — Filters */}
+        <aside
+          className="shrink-0 transition-all duration-200"
+          style={{ width: sidebarOpen ? 220 : 0, overflow: sidebarOpen ? 'visible' : 'hidden' }}
+        >
+          <div className="border border-border rounded-lg p-4 bg-card sticky top-16"
+            style={{ minWidth: 200 }}>
+            <ScreenerFilters
+              categories={uniqueCategories}
+              fundHouses={fundHouses}
+              onChange={setFilters}
+            />
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Top bar */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="shrink-0 text-xs font-medium px-2.5 py-1.5 border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              {sidebarOpen ? '◄ Filters' : 'Filters ►'}
+              {activeFilterCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px]">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-semibold text-foreground inline mr-3">
+                Mutual Funds
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                {filtered.length.toLocaleString()} of {schemes.length.toLocaleString()}
               </span>
-            )}
-          </button>
-
-          <div className="flex-1 min-w-0">
-            <h2 className="text-[15px] font-semibold text-foreground inline mr-3">
-              Mutual Funds
-            </h2>
-            <span className="text-[11px] text-muted-foreground">
-              {filtered.length.toLocaleString()} of {schemes.length.toLocaleString()}
-            </span>
-          </div>
-
-          <Input
-            placeholder="Search by name…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            className="h-8 w-56 text-[12px] shrink-0"
-          />
-        </div>
-
-        {/* Table */}
-        <div className="border border-border rounded-md overflow-hidden bg-card">
-          <div className="grid grid-cols-[48px_80px_1fr_100px_130px_80px] bg-muted border-b border-border px-4 py-2.5">
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">#</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Code</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Scheme Name</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Fund House</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Category</span>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Risk</span>
-          </div>
-
-          {pageData.length === 0 ? (
-            <div className="py-16 text-center space-y-2">
-              <p className="text-[13px] text-muted-foreground">No funds match your criteria</p>
-              <p className="text-[11px] text-muted-foreground">Try adjusting filters or search</p>
             </div>
-          ) : (
-          pageData.map((fund: LightFund, i: number) => {
-            const rc = RISK_COLORS[fund.r]
-              return (
+
+            <div className="flex gap-1.5 shrink-0">
+              {SORT_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => setSort(opt.key)}
+                  className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
+                    sort === opt.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <Input
+              placeholder="Search by name…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="h-8 w-56 text-sm shrink-0"
+            />
+          </div>
+
+          {/* Table */}
+          <div className="border border-border rounded-md overflow-hidden bg-card">
+            <div className="grid grid-cols-[48px_80px_1fr_100px_130px_80px] bg-muted border-b border-border px-4 py-2.5">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">#</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Code</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Scheme Name</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide text-right">Fund House</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide text-right">Category</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide text-right">Risk</span>
+            </div>
+
+            {pageData.length === 0 ? (
+              <div className="py-16 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">No funds match your criteria</p>
+                <p className="text-xs text-muted-foreground">Try adjusting filters or search</p>
+              </div>
+            ) : (
+            pageData.map((fund: LightFund, i: number) => (
                 <button
                   key={fund.c}
                   onClick={() => navigate(`/fund/${fund.c}`)}
-                  className="grid grid-cols-[48px_80px_1fr_100px_130px_80px] w-full px-4 py-2.5 border-b border-border last:border-0 text-left hover:bg-white/[0.03] transition-colors duration-100 cursor-pointer group"
+                  className="grid grid-cols-[48px_80px_1fr_100px_130px_80px] w-full px-4 py-2.5 border-b border-border last:border-0 text-left hover:bg-muted transition-colors duration-100 cursor-pointer group"
                 >
-                  <span className="font-mono text-[10px] text-muted-foreground tabular-nums self-center">
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums self-center">
                     {(page * PAGE_SIZE + i + 1).toLocaleString()}
                   </span>
-                  <span className="font-mono text-[10px] text-muted-foreground tabular-nums self-center">
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums self-center">
                     {fund.c}
                   </span>
                   <div className="min-w-0 pr-2">
-                    <span className="text-[12px] text-foreground group-hover:text-primary transition-colors duration-100 leading-snug block truncate">
+                    <span className="text-sm text-foreground group-hover:text-primary transition-colors duration-100 leading-snug block truncate">
                       {fund.n}
                     </span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground text-right truncate self-center px-1">
+                  <span className="text-xs text-muted-foreground text-right truncate self-center px-1">
                     {fund.h.length > 14 ? fund.h.slice(0, 14) + '…' : fund.h}
                   </span>
-                  <span className="text-[10px] text-muted-foreground text-right truncate self-center px-1">
+                  <span className="text-xs text-muted-foreground text-right truncate self-center px-1">
                     {fund.g.length > 18 ? fund.g.slice(0, 18) + '…' : fund.g}
                   </span>
                   <span className="text-right self-center">
-                    <span
-                      className="inline-block text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
-                      style={{ background: rc.bg, color: rc.fg }}
-                    >
-                      {RISK_LABELS[fund.r]}
-                    </span>
+                    <RiskBadge risk={fund.r} />
                   </span>
                 </button>
-              )
-            })
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pb-6">
+              <p className="text-xs text-muted-foreground">
+                Page {page + 1} of {totalPages.toLocaleString()}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={page === 0}
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  className="text-xs font-medium px-3 py-1.5 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  ← Prev
+                </button>
+                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+                  const start = Math.max(0, Math.min(page - 3, totalPages - 7))
+                  const p2 = start + i
+                  return (
+                    <button
+                      key={p2}
+                      onClick={() => setPage(p2)}
+                      className={`text-xs font-medium px-2.5 py-1.5 border rounded tabular-nums transition-colors cursor-pointer ${
+                        p2 === page
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {p2 + 1}
+                    </button>
+                  )
+                })}
+                <button
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  className="text-xs font-medium px-3 py-1.5 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pb-6">
-            <p className="text-[11px] text-muted-foreground">
-              Page {page + 1} of {totalPages.toLocaleString()}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                disabled={page === 0}
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                className="text-[11px] font-medium px-3 py-1.5 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              >
-                ← Prev
-              </button>
-              {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                const start = Math.max(0, Math.min(page - 3, totalPages - 7))
-                const p2 = start + i
-                return (
-                  <button
-                    key={p2}
-                    onClick={() => setPage(p2)}
-                    className={`text-[11px] font-medium px-2.5 py-1.5 border rounded tabular-nums transition-colors cursor-pointer ${
-                      p2 === page
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    {p2 + 1}
-                  </button>
-                )
-              })}
-              <button
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                className="text-[11px] font-medium px-3 py-1.5 border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              >
-                Next →
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

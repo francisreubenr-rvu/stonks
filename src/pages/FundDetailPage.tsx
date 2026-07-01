@@ -2,6 +2,7 @@ import React from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useFundDetail } from '@/hooks/useFundDetail'
+import { useSxEffects } from '@/hooks/useSxEffects'
 import { riskFromCategory } from '@/lib/riskFromCategory'
 import { computeYearlyReturns } from '@/lib/fundStats'
 import { fetchAllSchemes } from '@/api/mfapiClient'
@@ -165,6 +166,7 @@ export default function FundDetailPage() {
     queryFn: fetchAllSchemes,
     staleTime: 3_600_000,
   })
+  const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   if (isLoading) return <LoadingSkeleton />
   if (error || !queryData) {
@@ -199,14 +201,14 @@ export default function FundDetailPage() {
   const isPos = (stats.cagr1y ?? 0) >= 0
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div ref={rootRef} className="space-y-5 max-w-3xl">
       {/* Back */}
       <button onClick={() => navigate(-1)} className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors flex items-center gap-1">
         ← Funds
       </button>
 
       {/* Header card */}
-      <div className="border border-border rounded-lg p-6 bg-card space-y-3">
+      <div data-reveal className="border border-border rounded-lg p-6 bg-card space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1 flex-1 min-w-0">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">{meta.fund_house}</p>
@@ -244,7 +246,7 @@ export default function FundDetailPage() {
       </div>
 
       {/* Chart */}
-      <div className="border border-border rounded-lg p-5 bg-card">
+      <div data-reveal className="border border-border rounded-lg p-5 bg-card">
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-4">NAV History</p>
         <NavChart data={data} positive={isPos} />
       </div>
@@ -266,7 +268,7 @@ export default function FundDetailPage() {
       </div>
 
       {/* Key stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div data-reveal className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard
           label="Sharpe Ratio"
           value={num(stats.sharpe)}
