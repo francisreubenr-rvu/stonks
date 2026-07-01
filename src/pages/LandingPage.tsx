@@ -62,6 +62,12 @@ const LP_CSS = `
   .lp-foot-link:hover  { color:#0F172A !important; }
   .lp-cta-btn:hover    { background:#047857 !important; }
   .lp-nav-cta:hover    { background:#047857 !important; }
+  @media (max-width: 820px) {
+    .lp-hero { grid-template-columns: 1fr !important; gap: 28px !important; padding-top: 96px !important; }
+    .lp-navlinks { display: none !important; }
+    .lp-grid3 { grid-template-columns: 1fr !important; }
+    .lp-footer { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
+  }
 `
 
 const MONO = "ui-monospace, 'SF Mono', SFMono-Regular, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, 'Liberation Mono', monospace"
@@ -266,10 +272,12 @@ export default function LandingPage() {
             <span style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em' }}>stonks</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {[['Funds', '/funds'], ['Indices', '/indices'], ['Compare', '/compare']].map(([lbl, path]) => (
-              <button key={lbl} onClick={() => navigate(path)} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: '#64748B', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>{lbl}</button>
-            ))}
-            <button onClick={() => scrollTo('footer-about')} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: '#64748B', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>About</button>
+            <div className="lp-navlinks" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {[['Funds', '/funds'], ['Indices', '/indices'], ['Compare', '/compare']].map(([lbl, path]) => (
+                <button key={lbl} onClick={() => navigate(path)} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: '#64748B', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>{lbl}</button>
+              ))}
+              <button onClick={() => scrollTo('footer-about')} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: '#64748B', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>About</button>
+            </div>
             <button data-magnetic className="lp-nav-cta" onClick={() => navigate('/funds')} style={{ marginLeft: 10, fontFamily: SANS, fontSize: 14, fontWeight: 600, color: '#FFFFFF', background: ACCENT, border: 'none', padding: '10px 18px', borderRadius: 10, cursor: 'pointer', transition: 'transform 0.18s ease-out, background 0.2s' }}>Launch app</button>
           </div>
         </div>
@@ -279,7 +287,7 @@ export default function LandingPage() {
       <section style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
         <canvas ref={particleRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '150px 24px 90px', display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 56, alignItems: 'center' }}>
+        <div className="lp-hero" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '150px 24px 90px', display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 56, alignItems: 'center' }}>
           {/* Copy */}
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 14px', border: '1px solid #E2E8F0', borderRadius: 999, background: '#F1F5F9', marginBottom: 28, animation: 'lpRise 0.6s ease-out both' }}>
@@ -367,7 +375,7 @@ export default function LandingPage() {
 
       {/* ── Stats band (real counts) ─────────────────────────────────────── */}
       <section style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '88px 24px' }}>
-        <div data-reveal style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, opacity: 0, transform: 'translateY(28px)' }}>
+        <div data-reveal className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, opacity: 0, transform: 'translateY(28px)' }}>
           {STATS.map(s => (
             <div key={s.label} style={{ textAlign: 'center', padding: '8px 4px' }}>
               <div style={{ fontFamily: MONO, fontSize: 'clamp(32px,4vw,46px)', fontWeight: 600, letterSpacing: '-0.02em', color: '#0F172A' }}>
@@ -386,7 +394,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: 'clamp(30px,4vw,46px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.08, margin: '0 0 16px' }}>Research that keeps up with the tape</h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: '#64748B', margin: 0 }}>Screen, track, and compare across the entire Indian market without juggling five tabs.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+        <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {FEATURES.map(f => (
             <div key={f.key} data-reveal data-reveal-delay={f.delay} style={{ opacity: 0, transform: 'translateY(32px)' }}>
               <div className="lp-feat" style={{ height: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: 26, transition: 'border-color 0.2s' }}>
@@ -411,7 +419,7 @@ export default function LandingPage() {
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} /> updated just now
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
+        <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
           {showcase.map((ix, i) => {
             const pos = ix.change >= 0
             const c = pos ? '#059669' : '#DC2626'
@@ -446,7 +454,7 @@ export default function LandingPage() {
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer id="footer-about" style={{ position: 'relative', zIndex: 1, borderTop: '1px solid #E2E8F0', padding: '56px 24px 40px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 32 }}>
+        <div className="lp-footer" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 32 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
               <span style={{ width: 9, height: 9, borderRadius: '50%', background: ACCENT }} />

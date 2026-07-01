@@ -143,14 +143,10 @@ export default function FundsPage() {
         <SectionEyebrow eyebrow="Fund Screener" title="Mutual Funds" />
       </div>
 
-      <div data-reveal className="flex gap-5">
-        {/* Left sidebar — Filters */}
-        <aside
-          className="shrink-0 transition-all duration-200"
-          style={{ width: sidebarOpen ? 220 : 0, overflow: sidebarOpen ? 'visible' : 'hidden' }}
-        >
-          <div className="border border-border rounded-lg p-4 bg-card sticky top-16"
-            style={{ minWidth: 200 }}>
+      <div data-reveal className="flex flex-col lg:flex-row gap-5">
+        {/* Left sidebar — Filters (stacks above the table on mobile) */}
+        <aside className={`shrink-0 w-full lg:w-[220px] ${sidebarOpen ? '' : 'hidden'}`}>
+          <div className="border border-border rounded-lg p-4 bg-card lg:sticky lg:top-16">
             <ScreenerFilters
               categories={uniqueCategories}
               fundHouses={fundHouses}
@@ -208,8 +204,10 @@ export default function FundsPage() {
             />
           </div>
 
-          {/* Table */}
+          {/* Table (horizontally scrollable on narrow screens) */}
           <div className="border border-border rounded-md overflow-hidden bg-card">
+            <div className="overflow-x-auto">
+            <div className="min-w-[560px] lg:min-w-0">
             <div className="grid grid-cols-[48px_80px_1fr_100px_130px_80px] bg-muted border-b border-border px-4 py-2.5">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">#</span>
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Code</span>
@@ -254,6 +252,8 @@ export default function FundsPage() {
                 </button>
               ))
             )}
+            </div>
+            </div>
           </div>
 
           {/* Pagination */}

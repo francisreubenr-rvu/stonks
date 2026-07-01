@@ -35,6 +35,8 @@ export default function WatchlistPage() {
       </div>
 
       <div data-reveal className="border border-border rounded-md overflow-hidden bg-card">
+        <div className="overflow-x-auto">
+        <div className="min-w-[420px]">
         <div className="grid grid-cols-[1fr_120px_120px_48px] bg-muted border-b border-border px-4 py-2.5">
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Symbol</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Price</span>
@@ -82,6 +84,8 @@ export default function WatchlistPage() {
             </div>
           )
         })}
+        </div>
+        </div>
       </div>
     </div>
   )

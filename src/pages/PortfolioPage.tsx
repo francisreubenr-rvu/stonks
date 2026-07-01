@@ -182,6 +182,8 @@ export default function PortfolioPage() {
       </div>
 
       <div data-reveal className="border border-border rounded-md overflow-hidden bg-card">
+        <div className="overflow-x-auto">
+        <div className="min-w-[640px]">
         <div className="grid grid-cols-[1fr_80px_100px_100px_100px_100px_40px] bg-muted border-b border-border px-4 py-2.5">
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Symbol</span>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">Qty</span>
@@ -227,6 +229,8 @@ export default function PortfolioPage() {
             </div>
           )
         })}
+        </div>
+        </div>
       </div>
     </div>
   )
