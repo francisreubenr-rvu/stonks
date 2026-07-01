@@ -1,0 +1,39 @@
+{
+  "verifiedOn": "2026-07-01",
+  "note": "Reachability tested keyless from a datacenter IP. 'browser-only' = blocked server-side by WAF, works via the app proxy.",
+  "keylessFeeds": [
+    { "id": "amfi-navall", "name": "AMFI NAVAll", "url": "https://portal.amfiindia.com/spages/NAVAll.txt", "data": ["mf-active", "isin", "nav"], "auth": "none", "cors": "proxy", "status": "ok", "usedHere": true },
+    { "id": "mfapi", "name": "mfapi.in", "url": "https://api.mfapi.in/mf", "data": ["mf-list", "nav-history"], "auth": "none", "cors": "yes", "status": "ok", "usedHere": true },
+    { "id": "nse-allindices", "name": "NSE allIndices", "url": "https://www.nseindia.com/api/allIndices", "data": ["indices"], "auth": "none", "cors": "proxy", "status": "ok", "usedHere": true },
+    { "id": "nse-equity-master", "name": "NSE EQUITY_L", "url": "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv", "data": ["equity-listing", "isin"], "auth": "none", "cors": "proxy", "status": "ok", "usedHere": true },
+    { "id": "nse-bhavcopy", "name": "NSE bhavcopy", "url": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_DDMMYYYY.csv", "data": ["eod-ohlcv"], "auth": "none", "cors": "proxy", "status": "ok", "usedHere": true },
+    { "id": "nse-quote", "name": "NSE quote/history/search", "url": "https://www.nseindia.com/api/quote-equity?symbol=", "data": ["quote", "fundamentals", "eod", "search"], "auth": "none", "cors": "browser-only", "status": "akamai-blocked-serverside", "usedHere": true },
+    { "id": "bse", "name": "BSE India", "url": "https://api.bseindia.com/BseIndiaAPI/api/", "data": ["sensex", "bse-quotes"], "auth": "none", "cors": "browser-only", "status": "waf-blocked-serverside", "usedHere": false }
+  ],
+  "developerApis": [
+    { "id": "indianapi", "name": "IndianAPI Marketplace", "url": "https://indianapi.in", "data": ["stocks", "mf", "ipo", "commodities", "news"], "auth": "key", "cost": "freemium" },
+    { "id": "apify-moneycontrol", "name": "Apify MoneyControl API", "url": "https://apify.com/fingolfin/india-stock-market-api", "data": ["stocks", "indices", "mf"], "auth": "token", "cost": "usage" },
+    { "id": "truedata", "name": "TrueData", "url": "https://truedata.in/products/marketdataapi", "data": ["realtime", "options", "history"], "auth": "key", "cost": "paid" },
+    { "id": "api-ninjas-mf", "name": "API Ninjas Mutual Fund", "url": "https://api-ninjas.com/api/mutualfund", "data": ["mf", "isin"], "auth": "key", "cost": "freemium" },
+    { "id": "finnhub", "name": "Finnhub", "url": "https://finnhub.io", "data": ["equities", "news", "fundamentals"], "auth": "key", "cost": "freemium" }
+  ],
+  "brokerApis": [
+    { "id": "zerodha-kite", "name": "Zerodha Kite Connect", "url": "https://kite.trade", "auth": "account", "cost": "2000/mo" },
+    { "id": "upstox", "name": "Upstox API", "url": "https://upstox.com/developer/api", "auth": "account", "cost": "free" },
+    { "id": "icici-breeze", "name": "ICICI Breeze", "url": "https://www.icicidirect.com", "auth": "account", "cost": "free" },
+    { "id": "kotak-neo", "name": "Kotak Neo Trade API", "url": "https://www.kotakneo.com", "auth": "account", "cost": "free" },
+    { "id": "angel-smartapi", "name": "Angel One SmartAPI", "url": "https://smartapi.angelbroking.com", "auth": "account", "cost": "free" }
+  ],
+  "researchPortals": [
+    { "id": "amfi", "name": "AMFI India", "url": "https://www.amfiindia.com", "api": "navall" },
+    { "id": "valueresearch", "name": "Value Research", "url": "https://www.valueresearchonline.com", "api": "none" },
+    { "id": "morningstar-in", "name": "Morningstar India", "url": "https://www.morningstar.in", "api": "none" },
+    { "id": "tickertape", "name": "Tickertape", "url": "https://www.tickertape.in", "api": "none" },
+    { "id": "moneycontrol", "name": "Moneycontrol", "url": "https://www.moneycontrol.com", "api": "unofficial" },
+    { "id": "groww", "name": "Groww", "url": "https://groww.in", "api": "unofficial" },
+    { "id": "screener", "name": "Screener.in", "url": "https://www.screener.in", "api": "none" },
+    { "id": "trendlyne", "name": "Trendlyne", "url": "https://trendlyne.com", "api": "paid" },
+    { "id": "et-markets", "name": "Economic Times Markets", "url": "https://economictimes.indiatimes.com/markets", "api": "none" },
+    { "id": "livemint", "name": "Livemint", "url": "https://www.livemint.com/market", "api": "none" }
+  ]
+}

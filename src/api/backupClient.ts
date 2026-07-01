@@ -1,10 +1,10 @@
 import type { Quote, EodBar } from './dataTypes'
 import {
-  fetchQuote as yahooQuote,
-  fetchFundamentals as yahooFundamentals,
-  fetchEodBars as yahooEodBars,
-  fetchMultipleQuotes as yahooMultiple,
-} from './yahooFinanceClient'
+  fetchQuote as nseQuote,
+  fetchFundamentals as nseFundamentals,
+  fetchEodBars as nseEodBars,
+  fetchMultipleQuotes as nseMultiple,
+} from './nseApiClient'
 
 function delay(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
@@ -40,7 +40,7 @@ async function loadFallbackCache(): Promise<Quote[]> {
 
 export async function fetchQuoteWithFallback(symbol: string): Promise<Quote> {
   try {
-    return await withRetry(() => yahooQuote(symbol))
+    return await withRetry(() => nseQuote(symbol))
   } catch (e: any) {
     if (e?.message?.includes('429') || e?.message?.includes('rate')) {
       const cleanSymbol = symbol.replace(/\..*$/, '')
@@ -55,15 +55,15 @@ export async function fetchQuoteWithFallback(symbol: string): Promise<Quote> {
 
 export async function fetchFundamentalsWithFallback(symbol: string) {
   try {
-    return await withRetry(() => yahooFundamentals(symbol))
+    return await withRetry(() => nseFundamentals(symbol))
   } catch {
     return null
   }
 }
 
-export async function fetchEodBarsWithFallback(symbol: string, range = '1mo', interval = '1d'): Promise<EodBar[]> {
+export async function fetchEodBarsWithFallback(symbol: string, range = '1mo', _interval = '1d'): Promise<EodBar[]> {
   try {
-    return await withRetry(() => yahooEodBars(symbol, range, interval))
+    return await withRetry(() => nseEodBars(symbol, range))
   } catch {
     return []
   }
@@ -71,7 +71,7 @@ export async function fetchEodBarsWithFallback(symbol: string, range = '1mo', in
 
 export async function fetchMultipleWithFallback(symbols: string[]): Promise<Quote[]> {
   try {
-    return await withRetry(() => yahooMultiple(symbols))
+    return await withRetry(() => nseMultiple(symbols))
   } catch {
     const all = await loadFallbackCache()
     return all.filter(q => symbols.includes(q.symbol))

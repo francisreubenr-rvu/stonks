@@ -6,10 +6,11 @@
   "homepage": "https://francisreubenr-rvu.github.io/stonks",
   "scripts": {
     "dev": "vite",
+    "refresh-data": "node scripts/refresh-data.mjs",
     "build": "tsc --noEmit && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "npm run refresh-data && npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

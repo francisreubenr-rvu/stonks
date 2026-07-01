@@ -12,8 +12,9 @@ export function useDashboard() {
   })
 
   const dashboard = useMemo<DashboardData>(() => {
+    const BROAD = new Set(['NIFTY 50', 'NIFTY NEXT 50', 'SENSEX'])
     const sectorIndices = indices.filter(i =>
-      i.symbol.includes('NIFTY') && i.symbol !== 'NIFTY 50' && i.symbol !== 'SENSEX'
+      i.symbol.includes('NIFTY') && !BROAD.has(i.symbol)
     )
 
     const sectors: SectorPerformance[] = sectorIndices.map(i => ({

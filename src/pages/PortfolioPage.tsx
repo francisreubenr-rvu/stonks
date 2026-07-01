@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchMultipleQuotes } from '@/api/yahooFinanceClient'
+import { fetchMultipleWithFallback } from '@/api/backupClient'
 import { NS } from '@/lib/symbols'
 import type { Holding, PortfolioItem } from '@/api/dataTypes'
 
@@ -26,7 +26,7 @@ export default function PortfolioPage() {
 
   const { data: quotes } = useQuery({
     queryKey: ['portfolioQuotes', ...holdings.map(h => h.symbol)],
-    queryFn: () => fetchMultipleQuotes(holdings.map(h => `${h.symbol}${NS}`)),
+    queryFn: () => fetchMultipleWithFallback(holdings.map(h => `${h.symbol}${NS}`)),
     enabled: holdings.length > 0,
     staleTime: 60_000,
   })

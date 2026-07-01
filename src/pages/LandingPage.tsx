@@ -5,16 +5,21 @@ const ACCENT = '#10B981'
 
 // ── Static data ─────────────────────────────────────────────────────────────
 
+// Real NSE close snapshot, regenerated from the equity bhavcopy. Do NOT hand-edit
+// the rows between the sentinels — run `npm run refresh-data` to refresh them from
+// the keyless NSE feed (keeps the marquee in lockstep with stocks-fallback.json).
 const TICKER = [
-  ['RELIANCE','2,945.20','+1.24%',true],['TCS','4,102.50','+0.62%',true],
-  ['HDFCBANK','1,678.30','-0.45%',false],['INFY','1,842.10','+0.88%',true],
-  ['ICICIBANK','1,234.55','+1.10%',true],['SBIN','842.30','-0.32%',false],
-  ['BHARTIARTL','1,567.80','+2.05%',true],['ITC','478.90','+0.41%',true],
-  ['LT','3,612.40','-0.78%',false],['AXISBANK','1,156.20','+0.55%',true],
-  ['KOTAKBANK','1,789.60','-0.21%',false],['HINDUNILVR','2,456.70','+0.33%',true],
-  ['BAJFINANCE','7,234.50','+1.67%',true],['MARUTI','12,890.30','-0.92%',false],
-  ['SUNPHARMA','1,678.40','+0.74%',true],['TATAMOTORS','978.50','+2.34%',true],
-  ['ADANIENT','2,890.60','-1.45%',false],['WIPRO','542.10','+1.33%',true],
+  /* TICKER-DATA:START */
+  ['RELIANCE','1,293.90','-0.55%',false],['TCS','2,031.50','-3.17%',false],
+  ['HDFCBANK','797.95','-0.12%',false],['INFY','1,000.40','-3.50%',false],
+  ['ICICIBANK','1,375.20','-0.89%',false],['SBIN','1,026.90','-0.89%',false],
+  ['BHARTIARTL','1,852.00','+0.59%',true],['ITC','286.95','-1.29%',false],
+  ['LT','4,143.40','-0.52%',false],['AXISBANK','1,345.70','-0.82%',false],
+  ['KOTAKBANK','392.25','-0.82%',false],['HINDUNILVR','2,118.20','-1.54%',false],
+  ['BAJFINANCE','1,004.75','+2.31%',true],['MARUTI','14,115.00','+5.24%',true],
+  ['SUNPHARMA','1,862.50','-0.66%',false],['TMPV','352.20','+2.07%',true],
+  ['ADANIENT','3,036.00','+2.48%',true],['WIPRO','170.39','-2.90%',false],
+  /* TICKER-DATA:END */
 ].map(([sym, price, delta, up]) => ({ sym, price, delta, c: up ? '#34D399' : '#F87171' }))
 
 const BAND_STATS = [

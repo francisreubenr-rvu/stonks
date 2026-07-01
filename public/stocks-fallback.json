@@ -1,7 +1,182 @@
 [
-  {"symbol": "RELIANCE",  "name": "Reliance Industries Ltd",       "price": 1286.55, "change": -8.20,  "changePct": -0.63, "volume": 5250000, "pe": 22.4, "marketCap": 17400000},
-  {"symbol": "TCS",       "name": "Tata Consultancy Services Ltd", "price": 3580.25, "change": 34.70,  "changePct": 0.98,  "volume": 1850000, "pe": 27.3, "marketCap": 12950000},
-  {"symbol": "HDFCBANK",  "name": "HDFC Bank Ltd",                 "price": 1745.80, "change": 12.35,  "changePct": 0.71,  "volume": 8100000, "pe": 19.8, "marketCap": 13280000},
-  {"symbol": "INFY",      "name": "Infosys Ltd",                   "price": 1528.90, "change": -15.40, "changePct": -1.00, "volume": 6840000, "pe": 22.6, "marketCap": 6350000},
-  {"symbol": "ICICIBANK", "name": "ICICI Bank Ltd",                "price": 1256.30, "change": 9.15,   "changePct": 0.73,  "volume": 9450000, "pe": 18.5, "marketCap": 8820000}
+  {
+    "symbol": "RELIANCE",
+    "name": "Reliance Industries Limited",
+    "price": 1293.9,
+    "change": -7.1,
+    "changePct": -0.55,
+    "volume": 15695263,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "TCS",
+    "name": "Tata Consultancy Services Limited",
+    "price": 2031.5,
+    "change": -66.4,
+    "changePct": -3.17,
+    "volume": 6848411,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "HDFCBANK",
+    "name": "HDFC Bank Limited",
+    "price": 797.95,
+    "change": -0.95,
+    "changePct": -0.12,
+    "volume": 45778356,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "INFY",
+    "name": "Infosys Limited",
+    "price": 1000.4,
+    "change": -36.3,
+    "changePct": -3.5,
+    "volume": 24128263,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "ICICIBANK",
+    "name": "ICICI Bank Limited",
+    "price": 1375.2,
+    "change": -12.4,
+    "changePct": -0.89,
+    "volume": 18398057,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "SBIN",
+    "name": "State Bank of India",
+    "price": 1026.9,
+    "change": -9.2,
+    "changePct": -0.89,
+    "volume": 11161643,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "BHARTIARTL",
+    "name": "Bharti Airtel Limited",
+    "price": 1852,
+    "change": 10.9,
+    "changePct": 0.59,
+    "volume": 7233634,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "ITC",
+    "name": "ITC Limited",
+    "price": 286.95,
+    "change": -3.75,
+    "changePct": -1.29,
+    "volume": 18180676,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "LT",
+    "name": "Larsen & Toubro Limited",
+    "price": 4143.4,
+    "change": -21.8,
+    "changePct": -0.52,
+    "volume": 1539094,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "AXISBANK",
+    "name": "Axis Bank Limited",
+    "price": 1345.7,
+    "change": -11.1,
+    "changePct": -0.82,
+    "volume": 7781221,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "KOTAKBANK",
+    "name": "Kotak Mahindra Bank Limited",
+    "price": 392.25,
+    "change": -3.25,
+    "changePct": -0.82,
+    "volume": 24824891,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "HINDUNILVR",
+    "name": "Hindustan Unilever Limited",
+    "price": 2118.2,
+    "change": -33.1,
+    "changePct": -1.54,
+    "volume": 2364422,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "BAJFINANCE",
+    "name": "Bajaj Finance Limited",
+    "price": 1004.75,
+    "change": 22.7,
+    "changePct": 2.31,
+    "volume": 12445420,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "MARUTI",
+    "name": "Maruti Suzuki India Limited",
+    "price": 14115,
+    "change": 703,
+    "changePct": 5.24,
+    "volume": 1511415,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "SUNPHARMA",
+    "name": "Sun Pharmaceutical Industries Limited",
+    "price": 1862.5,
+    "change": -12.3,
+    "changePct": -0.66,
+    "volume": 2352774,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "TMPV",
+    "name": "Tata Motors Passenger Vehicles Limited",
+    "price": 352.2,
+    "change": 7.15,
+    "changePct": 2.07,
+    "volume": 17609242,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "ADANIENT",
+    "name": "Adani Enterprises Limited",
+    "price": 3036,
+    "change": 73.5,
+    "changePct": 2.48,
+    "volume": 2099291,
+    "pe": 0,
+    "marketCap": 0
+  },
+  {
+    "symbol": "WIPRO",
+    "name": "Wipro Limited",
+    "price": 170.39,
+    "change": -5.09,
+    "changePct": -2.9,
+    "volume": 26845383,
+    "pe": 0,
+    "marketCap": 0
+  }
 ]

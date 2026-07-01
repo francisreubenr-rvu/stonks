@@ -39,7 +39,10 @@ export async function fetchFundDetail(schemeCode: number | string): Promise<MFDe
     .slice()
     .reverse()
     .map(d => ({ date: d.date, nav: parseFloat(d.nav) }))
-    .filter(d => !isNaN(d.nav))
+    // Drop NaN and non-positive NAVs — MFAPI occasionally returns a stray 0,
+    // which otherwise produces divide-by-zero returns (NaN vol) and a phantom
+    // -100% drawdown in the stats and chart.
+    .filter(d => !isNaN(d.nav) && d.nav > 0)
 
   return { meta: raw.meta, data }
 }

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchAllSchemes } from '@/api/mfapiClient'
+import { fetchActiveSchemeCodes } from '@/api/amfiClient'
 import { cacheGet, cacheSet, cacheKey } from '@/lib/cache'
 
 // Lightweight fund type — 4x less memory than EnrichedScheme
@@ -20,7 +21,7 @@ const CAT_PATTERNS: Array<[RegExp, string]> = [
   [/Large\s*&?\s*Mid/i, 'Large & Mid'], [/ELSS/i, 'ELSS'],
   [/Index\s*Fund/i, 'Index Fund'], [/ETF/i, 'ETF'],
   [/Sectoral|Thematic|Technology|Pharma|Infrastructure|Banking|Energy|Consumption|MNC|Dividend Yield/i, 'Sectoral/Thematic'],
-  [/International|Global|US|Nasdaq|S&P/i, 'International'],
+  [/International|Global|\bU\.?S\.?\b|Nasdaq|S&P/i, 'International'],
   [/Liquid/i, 'Liquid'], [/Overnight/i, 'Overnight'], [/Ultra\s*Short/i, 'Ultra Short'],
   [/Money\s*Market/i, 'Money Market'], [/Low\s*Duration/i, 'Low Duration'],
   [/Short\s*Duration/i, 'Short Duration'], [/Corporate\s*Bond/i, 'Corporate Bond'],
@@ -55,19 +56,31 @@ function house(fundName: string): string {
   return words.slice(0, 2).join(' ')
 }
 
-function enrich(raw: { schemeCode: number; schemeName: string }[]): LightFund[] {
-  const result: LightFund[] = new Array(raw.length)
+function enrich(
+  raw: { schemeCode: number; schemeName: string }[],
+  active: Set<number>,
+): LightFund[] {
+  // MFAPI returns duplicate schemeCode entries — dedupe so React keys stay unique
+  const seen = new Set<number>()
+  const result: LightFund[] = []
+  // When the AMFI manifest is available, keep only currently-active schemes;
+  // if it failed to load (empty set) we fall back to the full list rather than
+  // showing nothing.
+  const filterActive = active.size > 0
   for (let i = 0; i < raw.length; i++) {
     const s = raw[i]
+    if (seen.has(s.schemeCode)) continue
+    if (filterActive && !active.has(s.schemeCode)) continue
+    seen.add(s.schemeCode)
     const fundName = s.schemeName.split(' — ')[0].trim()
     const cg = cat(fundName)
-    result[i] = {
+    result.push({
       c: s.schemeCode,
       n: s.schemeName,
       g: cg,
       r: risk(cg),
       h: house(fundName),
-    }
+    })
   }
   return result
 }
@@ -78,11 +91,12 @@ export function useFundList() {
     staleTime: Infinity,
     gcTime: 10 * 60_000,
     queryFn: async () => {
-      const cached = await cacheGet<LightFund[]>(cacheKey(['funds', 'v3']))
+      // v6: fund universe pruned to AMFI-active schemes (drops ~62% dead/defunct)
+      const cached = await cacheGet<LightFund[]>(cacheKey(['funds', 'v6']))
       if (cached) return cached
-      const raw = await fetchAllSchemes()
-      const enriched = enrich(raw)
-      cacheSet(cacheKey(['funds', 'v3']), enriched, 86_400_000)
+      const [raw, active] = await Promise.all([fetchAllSchemes(), fetchActiveSchemeCodes()])
+      const enriched = enrich(raw, active)
+      cacheSet(cacheKey(['funds', 'v6']), enriched, 86_400_000)
       return enriched
     },
     placeholderData: (prev) => prev,

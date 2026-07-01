@@ -159,7 +159,7 @@ function LoadingSkeleton() {
 export default function FundDetailPage() {
   const { schemeCode } = useParams<{ schemeCode: string }>()
   const navigate = useNavigate()
-  const { data: queryData, isLoading, error } = useFundDetail(schemeCode ?? '')
+  const { data: queryData, isLoading, error, refetch, isFetching } = useFundDetail(schemeCode ?? '')
   const { data: allSchemes } = useQuery({
     queryKey: ['allSchemes'],
     queryFn: fetchAllSchemes,
@@ -167,14 +167,31 @@ export default function FundDetailPage() {
   })
 
   if (isLoading) return <LoadingSkeleton />
-  if (error || !queryData) return (
-    <div className="space-y-3">
-      <p className="text-sm text-destructive">{error?.message ?? 'Fund not found'}</p>
-      <button onClick={() => navigate(-1)} className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer">
-        ← Go back
-      </button>
-    </div>
-  )
+  if (error || !queryData) {
+    const msg = error?.message ?? ''
+    const isUnavailable = /50\d|timeout|aborted|Failed to fetch|NetworkError/i.test(msg)
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-destructive">
+          {isUnavailable
+            ? 'The fund data service (MFAPI) is temporarily unavailable. Please try again in a moment.'
+            : msg || 'Fund not found'}
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-xs text-primary hover:underline cursor-pointer disabled:opacity-50"
+          >
+            {isFetching ? 'Retrying…' : '↻ Retry'}
+          </button>
+          <button onClick={() => navigate(-1)} className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer">
+            ← Go back
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const { detail, stats } = queryData
   const { meta, data } = detail

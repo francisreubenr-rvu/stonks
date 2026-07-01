@@ -1,20 +1,31 @@
-// Cloudflare Worker — CORS proxy for Yahoo Finance
-// Deploy: npx wrangler deploy
+// Cloudflare Worker — CORS proxy for the NSE India official API.
+// Handles the browser headers + session-cookie bootstrap that NSE's Akamai edge
+// requires, then forwards /api/nse/<path> → https://www.nseindia.com/api/<path>.
+// Deploy: npx wrangler deploy --config api-proxy/wrangler.toml
+
+const NSE_ORIGIN = 'https://www.nseindia.com'
+const PROXY_PREFIX = '/api/nse'
+
+const BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
 const ALLOWED_ORIGINS = [
   'https://francisreubenr-rvu.github.io',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:4173',
 ]
 
+// Only allow the NSE API paths the app actually uses.
 const ALLOWED_PATHS = [
-  '/v8/finance/chart/',
-  '/v7/finance/quote',
-  '/v10/finance/quoteSummary/',
-  '/v6/finance/autocomplete',
+  '/allIndices',
+  '/marketStatus',
+  '/quote-equity',
+  '/search/autocomplete',
+  '/historical/cm/equity',
 ]
 
-// Rate limiter: 100 req/min per IP
+// Rate limiter: 120 req/min per IP
 const rateLimit = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(req: Request): boolean {
@@ -25,9 +36,61 @@ function checkRateLimit(req: Request): boolean {
     rateLimit.set(ip, { count: 1, resetAt: now + 60_000 })
     return true
   }
-  if (entry.count >= 100) return false
+  if (entry.count >= 120) return false
   entry.count++
   return true
+}
+
+// ── NSE session cookie (cached per isolate, lazily refreshed) ────────────────
+let nseCookie = ''
+let cookieAt = 0
+
+async function ensureCookie(force = false): Promise<string> {
+  if (!force && nseCookie && Date.now() - cookieAt < 8 * 60_000) return nseCookie
+  try {
+    const res = await fetch(`${NSE_ORIGIN}/`, {
+      headers: {
+        'User-Agent': BROWSER_UA,
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    })
+    const jar = res.headers.getSetCookie?.() ?? []
+    const cookie = jar.map(c => c.split(';')[0]).join('; ')
+    if (cookie) { nseCookie = cookie; cookieAt = Date.now() }
+  } catch {
+    /* leave previous cookie in place */
+  }
+  return nseCookie
+}
+
+function corsHeaders(origin: string): Record<string, string> {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+  }
+}
+
+async function nseFetch(targetPath: string): Promise<Response> {
+  const cookie = await ensureCookie()
+  const doFetch = (ck: string) =>
+    fetch(`${NSE_ORIGIN}/api${targetPath}`, {
+      headers: {
+        'User-Agent': BROWSER_UA,
+        Accept: 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        Referer: `${NSE_ORIGIN}/`,
+        ...(ck ? { Cookie: ck } : {}),
+      },
+    })
+
+  let res = await doFetch(cookie)
+  // One retry with a freshly bootstrapped cookie on an auth/edge rejection.
+  if (res.status === 401 || res.status === 403) {
+    res = await doFetch(await ensureCookie(true))
+  }
+  return res
 }
 
 export default {
@@ -35,61 +98,48 @@ export default {
     const origin = request.headers.get('Origin') ?? ''
 
     if (request.method === 'OPTIONS') {
-      if (!ALLOWED_ORIGINS.includes(origin) && origin !== '') {
+      if (origin !== '' && !ALLOWED_ORIGINS.includes(origin)) {
         return new Response(null, { status: 403 })
       }
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+          ...corsHeaders(origin),
           'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Headers': 'Content-Type, Accept',
           'Access-Control-Max-Age': '86400',
-          'X-Content-Type-Options': 'nosniff',
-          'Referrer-Policy': 'strict-origin-when-cross-origin',
         },
       })
     }
 
     if (!checkRateLimit(request)) {
-      return new Response('Rate limit exceeded', { status: 429 })
+      return new Response('Rate limit exceeded', { status: 429, headers: corsHeaders(origin) })
     }
 
     const url = new URL(request.url)
-    const normalized = decodeURIComponent(url.pathname)
-
-    if (!ALLOWED_PATHS.some(p => normalized.startsWith(p))) {
-      return new Response('Unauthorized path', { status: 403 })
+    if (!url.pathname.startsWith(PROXY_PREFIX)) {
+      return new Response('Not found', { status: 404, headers: corsHeaders(origin) })
     }
 
-    const target = `https://query1.finance.yahoo.com${url.pathname}${url.search}`
+    const apiPath = url.pathname.slice(PROXY_PREFIX.length) // e.g. "/allIndices"
+    if (!ALLOWED_PATHS.some(p => apiPath === p || apiPath.startsWith(p))) {
+      return new Response('Unauthorized path', { status: 403, headers: corsHeaders(origin) })
+    }
 
-    const response = await fetch(target, {
-      method: request.method,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; StonksBot/1.0)',
-        'Accept': 'application/json',
-      },
-    })
-
-    // If Yahoo rate-limited, return error so client can show meaningful message
-    if (response.status === 429) {
-      return new Response('Yahoo Finance rate limit exceeded. Try again in a minute.', {
-        status: 429,
-        headers: {
-          'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-          'X-Content-Type-Options': 'nosniff',
-          'Referrer-Policy': 'strict-origin-when-cross-origin',
-          'Cache-Control': 'no-cache',
-        },
+    let upstream: Response
+    try {
+      upstream = await nseFetch(`${apiPath}${url.search}`)
+    } catch {
+      return new Response(JSON.stringify({ error: 'NSE upstream unreachable' }), {
+        status: 502,
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
       })
     }
 
-    const headers = new Headers(response.headers)
-    headers.set('Access-Control-Allow-Origin', ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0])
-    headers.set('Cache-Control', 'public, max-age=60')
-    headers.set('X-Content-Type-Options', 'nosniff')
-    headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    const headers = new Headers(corsHeaders(origin))
+    headers.set('Content-Type', upstream.headers.get('Content-Type') ?? 'application/json')
+    // Short cache — index data refreshes ~every minute; protected endpoints vary.
+    headers.set('Cache-Control', 'public, max-age=30')
 
-    return new Response(response.body, { status: response.status, headers })
+    return new Response(upstream.body, { status: upstream.status, headers })
   },
 }

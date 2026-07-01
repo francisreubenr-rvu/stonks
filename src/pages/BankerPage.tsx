@@ -375,7 +375,7 @@ export default function BankerPage() {
                           </span>
                           <span className="font-mono text-[11px] font-bold tabular-nums"
                             style={{ color: scoreColor }}>
-                            {score.toFixed(1)}/100
+                            {Math.min(100, score).toFixed(1)}/100
                           </span>
                         </div>
                         <p className="text-[12px] font-medium text-foreground leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
@@ -416,7 +416,7 @@ export default function BankerPage() {
                               </span>
                             </div>
                             <div>
-                              <span className="text-[9px] text-muted-foreground">Score</span>
+                              <span className="text-[9px] text-muted-foreground">Sortino</span>
                               <span className="block font-mono text-[12px] font-semibold tabular-nums text-foreground">
                                 {num(stats.sortino)}
                               </span>

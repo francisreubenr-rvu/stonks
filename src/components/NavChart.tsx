@@ -9,13 +9,19 @@ const PERIOD_DAYS: Record<Period, number> = {
 }
 
 function filterByPeriod(data: NavPoint[], period: Period): NavPoint[] {
-  if (period === 'Max') return data
+  if (period === 'Max' || data.length === 0) return data
   const days = PERIOD_DAYS[period]
-  const cutoff = new Date(Date.now() - days * 86_400_000)
-  return data.filter(p => {
-    const [dd, mm, yyyy] = p.date.split('-').map(Number)
-    return new Date(yyyy, mm - 1, dd) >= cutoff
-  })
+  // Anchor the window to the fund's most recent NAV date — not "today". Many
+  // funds are closed/merged and their latest NAV is years in the past, so
+  // measuring from Date.now() would filter every point out and blank the chart.
+  const anchor = parseNavDate(data[data.length - 1].date)
+  const cutoff = anchor - days * 86_400_000
+  return data.filter(p => parseNavDate(p.date) >= cutoff)
+}
+
+function parseNavDate(d: string): number {
+  const [dd, mm, yyyy] = d.split('-').map(Number)
+  return new Date(yyyy, mm - 1, dd).getTime()
 }
 
 function formatDate(d: string): string {
@@ -148,6 +154,11 @@ function NavChart({ data, positive }: Props) {
 
       {/* Chart */}
       <div className="relative">
+        {filtered.length < 2 && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center text-[11px] text-muted-foreground pointer-events-none">
+            Not enough data for this period — try a longer range
+          </div>
+        )}
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
@@ -184,17 +195,22 @@ function NavChart({ data, positive }: Props) {
             </g>
           ))}
 
-          {/* X-axis date labels */}
-          {xTicks.map((t, i) => (
-            <text
-              key={i} x={t.x} y={H - 6}
-              textAnchor={i === 0 ? 'start' : i === xTicks.length - 1 ? 'end' : 'middle'}
-              fontSize={9} fill="var(--subtle)"
-              fontFamily="ui-monospace, monospace"
-            >
-              {formatDate(t.date).slice(3)}
-            </text>
-          ))}
+          {/* X-axis date labels — show day for short ranges, month/year for long */}
+          {xTicks.map((t, i) => {
+            const full = formatDate(t.date)              // "DD MMM YYYY"
+            const shortRange = period === '1M' || period === '3M' || period === '6M'
+            const label = shortRange ? full.slice(0, 6) : full.slice(3) // "DD MMM" vs "MMM YYYY"
+            return (
+              <text
+                key={i} x={t.x} y={H - 6}
+                textAnchor={i === 0 ? 'start' : i === xTicks.length - 1 ? 'end' : 'middle'}
+                fontSize={9} fill="var(--subtle)"
+                fontFamily="ui-monospace, monospace"
+              >
+                {label}
+              </text>
+            )
+          })}
 
           {/* Area fill — fades in */}
           {areaD && (

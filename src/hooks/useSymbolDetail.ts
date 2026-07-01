@@ -16,7 +16,7 @@ export interface SymbolDetailData {
 
 export function useSymbolDetail(symbol: string) {
   const cleanSymbol = symbol?.replace(/\..*$/, '') ?? ''
-  const yahooSymbol = cleanSymbol ? `${cleanSymbol}${NS}` : ''
+  const nseSymbol = cleanSymbol ? `${cleanSymbol}${NS}` : ''
 
   return useQuery({
     queryKey: ['symbolDetail', cleanSymbol],
@@ -25,7 +25,7 @@ export function useSymbolDetail(symbol: string) {
 
       let quote: Quote
       try {
-        quote = await fetchQuoteWithFallback(yahooSymbol)
+        quote = await fetchQuoteWithFallback(nseSymbol)
       } catch {
         const fallback = await loadStockFallback(cleanSymbol)
         if (fallback) {
@@ -37,8 +37,8 @@ export function useSymbolDetail(symbol: string) {
       }
 
       const [fundamentals, eodBars] = await Promise.all([
-        fetchFundamentalsWithFallback(yahooSymbol),
-        fetchEodBarsWithFallback(yahooSymbol, '1mo', '1d'),
+        fetchFundamentalsWithFallback(nseSymbol),
+        fetchEodBarsWithFallback(nseSymbol, '1mo', '1d'),
       ])
 
       return { quote, fundamentals, eodBars, isFallback }

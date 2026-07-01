@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSearch } from '@/hooks/useSearch'
-import type { SearchResult } from '@/api/yahooFinanceClient'
+import type { SearchResult } from '@/api/nseApiClient'
 
 export function SearchBar({ className = '' }: { className?: string }) {
   const [query, setQuery] = useState('')
@@ -41,11 +41,7 @@ export function SearchBar({ className = '' }: { className?: string }) {
       />
       {open && query.length >= 2 && (
         <div className="absolute top-full mt-1 right-0 w-72 bg-card border border-border rounded-md shadow-[0_4px_12px_-2px_rgba(15,23,42,0.10)] max-h-64 overflow-y-auto z-20">
-          {isLoading ? (
-            <div className="px-3 py-2 text-[11px] text-muted-foreground">Searching…</div>
-          ) : results.length === 0 ? (
-            <div className="px-3 py-2 text-[11px] text-muted-foreground">No results</div>
-          ) : (
+          {results.length > 0 ? (
             results.slice(0, 10).map(r => (
               <button
                 key={r.symbol}
@@ -65,6 +61,10 @@ export function SearchBar({ className = '' }: { className?: string }) {
                 </span>
               </button>
             ))
+          ) : (
+            <div className="px-3 py-2 text-[11px] text-muted-foreground">
+              {isLoading ? 'Searching…' : 'No results'}
+            </div>
           )}
         </div>
       )}

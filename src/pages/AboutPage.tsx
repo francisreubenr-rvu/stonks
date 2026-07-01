@@ -22,8 +22,8 @@ export default function AboutPage() {
         <div className="px-6 py-4 space-y-1.5">
           <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Data Sources</p>
           <p className="text-[13px] text-muted-foreground leading-relaxed">
-            Indian-Stock-Market-API (quotes / indices) · EODHD (fundamentals, mutual funds).
-            The current build uses stub clients — real HTTP calls are not wired.
+            MFAPI.in (mutual fund NAVs &amp; history) · NSE India official API (live
+            indices &amp; equity quotes, via CORS proxy) · DeepSeek (optional AI analysis).
           </p>
         </div>
       </div>
