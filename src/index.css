@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════════
+   MIDNIGHT TERMINAL — rework theme
+   Deep-ink canvas, phosphor-green data, amber risk signals.
+   Fraunces (display serif) · IBM Plex Sans (body) · IBM Plex Mono (data).
+   Same token contract as the light theme — pages re-skin untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -26,46 +33,53 @@
 }
 
 :root {
-  /* ── Base surfaces (DESIGN.md §1.1) ── */
-  --background: #F8FAFC;                        /* slate-50 off-white */
-  --foreground: #0F172A;                        /* slate-900 text */
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  /* ── Brand (§1.3) ── */
-  --primary: #059669;                           /* emerald-600 */
-  --primary-foreground: #FFFFFF;
-  --primary-hover: #047857;                     /* emerald-700 */
-  --primary-subtle: #ECFDF5;                    /* emerald-50 */
+  /* ── Base surfaces: ink scale, blue-black ── */
+  --background: #0A0D13;                        /* deep ink canvas */
+  --foreground: #E7EDF4;                        /* soft paper-white */
+  --card: #10141C;                              /* raised ink */
+  --card-foreground: #E7EDF4;
+  --popover: #141924;
+  --popover-foreground: #E7EDF4;
+  /* ── Brand: phosphor green ── */
+  --primary: #34D399;                           /* emerald-400 — glows on ink */
+  --primary-foreground: #06251A;                /* near-black green for on-primary text */
+  --primary-hover: #6EE7B7;                     /* brighter on hover (dark-mode inversion) */
+  --primary-subtle: #0C2B1F;                    /* deep green tint wells */
   /* ── Muted / secondary ── */
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;                             /* slate-100 */
-  --muted-foreground: #64748B;                  /* slate-500 */
-  --subtle: #94A3B8;                            /* slate-400 */
-  --accent: #F1F5F9;
-  --accent-foreground: #0F172A;
-  /* ── Semantic (§1.3) ── */
-  --destructive: #DC2626;                       /* red-600 */
-  --destructive-hover: #B91C1C;                 /* red-700 */
-  --border: #E2E8F0;                            /* slate-200 */
-  --border-strong: #CBD5E1;                     /* slate-300 */
-  --input: #E2E8F0;
-  --ring: #059669;
-  --radius: 6px;                                 /* radius.md */
-  --radius-8: 8px;                               /* radius.lg */
-  /* ── Financial deltas (§1.4) ── */
-  --delta-positive: #059669;
-  --delta-positive-bg: #ECFDF5;
-  --delta-negative: #DC2626;
-  --delta-negative-bg: #FEF2F2;
-  --delta-neutral: #64748B;
-  /* ── Risk badge scale (§1.5) ── */
-  --risk-low-bg: #ECFDF5;    --risk-low-fg: #047857;    --risk-low-border: #A7F3D0;
-  --risk-mod-bg: #FEFCE8;    --risk-mod-fg: #A16207;    --risk-mod-border: #FDE68A;
-  --risk-high-bg: #FFF7ED;   --risk-high-fg: #C2410C;   --risk-high-border: #FED7AA;
-  --risk-vhigh-bg: #FEF2F2;  --risk-vhigh-fg: #B91C1C;  --risk-vhigh-border: #FECACA;
+  --secondary: #1A202C;
+  --secondary-foreground: #E7EDF4;
+  --muted: #171C26;                             /* header rows, chips, hover wells */
+  --muted-foreground: #8B98AC;                  /* secondary text */
+  --subtle: #5C6A80;                            /* tertiary text, axis labels */
+  --accent: #1A202C;
+  --accent-foreground: #E7EDF4;
+  /* ── Semantic ── */
+  --destructive: #F87171;                       /* red-400 for dark contrast */
+  --destructive-hover: #FCA5A5;
+  --border: #1F2633;                            /* hairline ink border */
+  --border-strong: #2E3A4E;
+  --input: #1F2633;
+  --ring: #34D399;
+  --radius: 6px;
+  --radius-8: 8px;
+  /* ── Financial deltas: phosphor up, ember down ── */
+  --delta-positive: #3DDC97;
+  --delta-positive-bg: #0C2B1F;
+  --delta-negative: #F87171;
+  --delta-negative-bg: #2B1418;
+  --delta-neutral: #8B98AC;
+  /* ── Risk badge scale (dark wells, luminous text) ── */
+  --risk-low-bg: #0C2B1F;    --risk-low-fg: #4ADE80;    --risk-low-border: #1E5C40;
+  --risk-mod-bg: #2A2410;    --risk-mod-fg: #FACC15;    --risk-mod-border: #6B5D1A;
+  --risk-high-bg: #2B1B10;   --risk-high-fg: #FB923C;   --risk-high-border: #7C4A1E;
+  --risk-vhigh-bg: #2B1418;  --risk-vhigh-fg: #F87171;  --risk-vhigh-border: #7F2A2E;
+  /* ── Rework-only tokens ── */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --glow-positive: 0 0 14px rgba(61, 220, 151, 0.28);
+  --glow-negative: 0 0 14px rgba(248, 113, 113, 0.22);
+  --shadow-dropdown: 0 8px 24px -4px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 @layer base {
@@ -77,17 +91,52 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  /* Every number in the product speaks IBM Plex Mono */
+  .font-mono {
+    font-family: var(--font-data) !important;
+  }
+  /* Display serif for page-level headlines */
+  h1, h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  /* ── Atmosphere: scanlines + vignette, one fixed overlay ──
+     Sub-2% opacity — texture you feel, not see. Honors reduced motion
+     trivially (it's static). pointer-events: none, zero layout cost. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(231, 237, 244, 0.015) 0px,
+        rgba(231, 237, 244, 0.015) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      radial-gradient(ellipse 120% 90% at 50% -10%, rgba(52, 211, 153, 0.05), transparent 55%);
+  }
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  /* Scroll-reveal / count-up / sparkline-draw motion — see DESIGN.md §7 */
+  /* Scroll-reveal / count-up / marquee motion — see DESIGN.md §7 */
   @keyframes sxReveal { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
   @keyframes sxMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes sxPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }

@@ -261,7 +261,7 @@ function NavChart({ data, positive }: Props) {
         {/* Tooltip box */}
         {tooltip && (
           <div
-            className="absolute pointer-events-none z-10 bg-card border border-border rounded-md shadow-[0_4px_12px_-2px_rgba(15,23,42,0.10)] px-3 py-2 space-y-0.5"
+            className="absolute pointer-events-none z-10 bg-card border border-border rounded-md shadow-[var(--shadow-dropdown)] px-3 py-2 space-y-0.5"
             style={{
               left: `${Math.min(tooltip.x / W * 100, 72)}%`,
               top: `${Math.max(0, (tooltip.y / H * 100) - 40)}%`,

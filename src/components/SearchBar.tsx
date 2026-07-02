@@ -40,7 +40,7 @@ export function SearchBar({ className = '' }: { className?: string }) {
         className="h-7 w-48 bg-muted border border-border rounded-md px-2.5 text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
       />
       {open && query.length >= 2 && (
-        <div className="absolute top-full mt-1 right-0 w-72 bg-card border border-border rounded-md shadow-[0_4px_12px_-2px_rgba(15,23,42,0.10)] max-h-64 overflow-y-auto z-20">
+        <div className="absolute top-full mt-1 right-0 w-72 bg-card border border-border rounded-md shadow-[var(--shadow-dropdown)] max-h-64 overflow-y-auto z-20">
           {results.length > 0 ? (
             results.slice(0, 10).map(r => (
               <button

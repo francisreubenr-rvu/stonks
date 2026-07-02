@@ -4,7 +4,7 @@ import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useIndicesSnapshot } from '@/hooks/useIndicesSnapshot'
 import { useFundList } from '@/hooks/useFundList'
 
-const ACCENT = '#059669'
+const ACCENT = '#34D399' // phosphor green — literal (hexRgb needs RGB for the particle canvas)
 
 // ── Static data ─────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ const TICKER = [
   ['SUNPHARMA','1,862.50','-0.66%',false],['TMPV','352.20','+2.07%',true],
   ['ADANIENT','3,036.00','+2.48%',true],['WIPRO','170.39','-2.90%',false],
   /* TICKER-DATA:END */
-].map(([sym, price, delta, up]) => ({ sym, price, delta, c: up ? '#059669' : '#DC2626' }))
+].map(([sym, price, delta, up]) => ({ sym, price, delta, c: up ? 'var(--delta-positive)' : 'var(--delta-negative)' }))
 
 const FEATURES = [
   { key: 'screener', title: 'Fund Screener',  delay: 0,   desc: 'Filter thousands of mutual funds by risk, category, expense ratio and trailing returns — results in milliseconds.' },
@@ -54,14 +54,14 @@ const LP_CSS = `
   @keyframes lpPing  { 0% { transform:scale(1); opacity:0.7; } 70%,100% { transform:scale(2.6); opacity:0; } }
   @keyframes lpBlink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
   @keyframes lpRise   { 0% { opacity:0; transform:translateY(8px);  } 100% { opacity:1; transform:translateY(0); } }
-  .lp-nav-link:hover   { color:#0F172A !important; background:#F1F5F9 !important; }
-  .lp-btn-pri:hover    { background:#047857 !important; }
-  .lp-btn-out:hover    { border-color:#CBD5E1 !important; background:#F8FAFC !important; }
-  .lp-feat:hover       { border-color:#CBD5E1 !important; }
-  .lp-idx:hover        { border-color:#CBD5E1 !important; }
-  .lp-foot-link:hover  { color:#0F172A !important; }
-  .lp-cta-btn:hover    { background:#047857 !important; }
-  .lp-nav-cta:hover    { background:#047857 !important; }
+  .lp-nav-link:hover   { color:var(--foreground) !important; background:var(--muted) !important; }
+  .lp-btn-pri:hover    { background:var(--primary-hover) !important; }
+  .lp-btn-out:hover    { border-color:var(--border-strong) !important; background:var(--muted) !important; }
+  .lp-feat:hover       { border-color:var(--border-strong) !important; }
+  .lp-idx:hover        { border-color:var(--border-strong) !important; }
+  .lp-foot-link:hover  { color:var(--foreground) !important; }
+  .lp-cta-btn:hover    { background:var(--primary-hover) !important; }
+  .lp-nav-cta:hover    { background:var(--primary-hover) !important; }
   @media (max-width: 820px) {
     .lp-hero { grid-template-columns: 1fr !important; gap: 28px !important; padding-top: 96px !important; }
     .lp-navlinks { display: none !important; }
@@ -70,8 +70,9 @@ const LP_CSS = `
   }
 `
 
-const MONO = "ui-monospace, 'SF Mono', SFMono-Regular, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, 'Liberation Mono', monospace"
-const SANS = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+const MONO = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+const SANS = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+const DISPLAY = "'Fraunces', Georgia, serif"
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -256,14 +257,14 @@ export default function LandingPage() {
   // ── JSX ──────────────────────────────────────────────────────────────────
 
   return (
-    <div ref={rootRef} style={{ position: 'relative', minHeight: '100vh', background: '#F8FAFC', color: '#0F172A', fontFamily: SANS, overflowX: 'hidden' }}>
+    <div ref={rootRef} style={{ position: 'relative', minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)', fontFamily: SANS, overflowX: 'hidden' }}>
       <style>{LP_CSS}</style>
 
       {/* Scroll progress */}
       <div ref={progRef} style={{ position: 'fixed', top: 0, left: 0, height: 2, width: '0%', background: ACCENT, zIndex: 100, transition: 'width 0.08s linear' }} />
 
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ position: 'relative', width: 9, height: 9, borderRadius: '50%', background: ACCENT, display: 'inline-block' }}>
@@ -274,11 +275,11 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div className="lp-navlinks" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {[['Funds', '/funds'], ['Indices', '/indices'], ['Compare', '/compare']].map(([lbl, path]) => (
-                <button key={lbl} onClick={() => navigate(path)} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: '#64748B', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>{lbl}</button>
+                <button key={lbl} onClick={() => navigate(path)} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>{lbl}</button>
               ))}
-              <button onClick={() => scrollTo('footer-about')} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: '#64748B', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>About</button>
+              <button onClick={() => scrollTo('footer-about')} className="lp-nav-link" style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)', background: 'transparent', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: 'pointer', transition: 'color 0.15s, background 0.15s' }}>About</button>
             </div>
-            <button data-magnetic className="lp-nav-cta" onClick={() => navigate('/funds')} style={{ marginLeft: 10, fontFamily: SANS, fontSize: 14, fontWeight: 600, color: '#FFFFFF', background: ACCENT, border: 'none', padding: '10px 18px', borderRadius: 10, cursor: 'pointer', transition: 'transform 0.18s ease-out, background 0.2s' }}>Launch app</button>
+            <button data-magnetic className="lp-nav-cta" onClick={() => navigate('/funds')} style={{ marginLeft: 10, fontFamily: SANS, fontSize: 14, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '10px 18px', borderRadius: 10, cursor: 'pointer', transition: 'transform 0.18s ease-out, background 0.2s' }}>Launch app</button>
           </div>
         </div>
       </nav>
@@ -290,30 +291,30 @@ export default function LandingPage() {
         <div className="lp-hero" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '150px 24px 90px', display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 56, alignItems: 'center' }}>
           {/* Copy */}
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 14px', border: '1px solid #E2E8F0', borderRadius: 999, background: '#F1F5F9', marginBottom: 28, animation: 'lpRise 0.6s ease-out both' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 14px', border: '1px solid var(--border)', borderRadius: 999, background: 'var(--muted)', marginBottom: 28, animation: 'lpRise 0.6s ease-out both' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
-              <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.14em', color: '#64748B' }}>NSE · BSE · REAL-TIME RESEARCH</span>
+              <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.14em', color: 'var(--muted-foreground)' }}>NSE · BSE · REAL-TIME RESEARCH</span>
             </div>
-            <h1 style={{ fontSize: 'clamp(42px,5.6vw,74px)', lineHeight: 1.02, fontWeight: 700, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
-              <span style={{ display: 'block', color: '#0F172A', animation: 'lpRise 0.7s ease-out 0.05s both' }}>Screen Indian</span>
+            <h1 style={{ fontFamily: DISPLAY, fontSize: 'clamp(42px,5.6vw,74px)', lineHeight: 1.02, fontWeight: 700, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
+              <span style={{ display: 'block', color: 'var(--foreground)', animation: 'lpRise 0.7s ease-out 0.05s both' }}>Screen Indian</span>
               <span style={{ display: 'inline-block', animation: 'lpRise 0.7s ease-out 0.12s both' }}>
                 <span ref={cycleRef} style={{ color: ACCENT }}>funds</span>
                 <span style={{ display: 'inline-block', width: 4, height: '0.82em', background: ACCENT, marginLeft: 6, verticalAlign: 'baseline', transform: 'translateY(0.08em)', animation: 'lpBlink 1.1s step-end infinite' }} />
               </span>
             </h1>
-            <p style={{ fontSize: 18, lineHeight: 1.6, color: '#64748B', maxWidth: 480, margin: '0 0 36px', animation: 'lpRise 0.7s ease-out 0.2s both' }}>
+            <p style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 480, margin: '0 0 36px', animation: 'lpRise 0.7s ease-out 0.2s both' }}>
               A blazing-fast screener for India's mutual funds, every NSE &amp; BSE index, and live equities — built for people who read the numbers, not the noise.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 40, animation: 'lpRise 0.7s ease-out 0.28s both' }}>
-              <button data-magnetic className="lp-btn-pri" onClick={() => navigate('/funds')} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#FFFFFF', background: ACCENT, border: 'none', padding: '15px 28px', borderRadius: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 9, transition: 'transform 0.18s ease-out, background 0.2s' }}>
+              <button data-magnetic className="lp-btn-pri" onClick={() => navigate('/funds')} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '15px 28px', borderRadius: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 9, transition: 'transform 0.18s ease-out, background 0.2s' }}>
                 Start screening
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </button>
-              <button data-magnetic className="lp-btn-out" onClick={() => navigate('/indices')} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#0F172A', background: '#FFFFFF', border: '1px solid #E2E8F0', padding: '15px 26px', borderRadius: 12, cursor: 'pointer', transition: 'border-color 0.2s, background 0.2s' }}>View live indices</button>
+              <button data-magnetic className="lp-btn-out" onClick={() => navigate('/indices')} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: 'var(--foreground)', background: 'var(--card)', border: '1px solid var(--border)', padding: '15px 26px', borderRadius: 12, cursor: 'pointer', transition: 'border-color 0.2s, background 0.2s' }}>View live indices</button>
             </div>
             <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap', animation: 'lpRise 0.7s ease-out 0.36s both' }}>
               {['Real-time NSE + BSE', 'Thousands of funds indexed', 'Free forever'].map(t => (
-                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, color: '#64748B', fontSize: 13.5, fontWeight: 500 }}>
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, color: 'var(--muted-foreground)', fontSize: 13.5, fontWeight: 500 }}>
                   <span style={{ color: ACCENT }}>✓</span> {t}
                 </div>
               ))}
@@ -322,12 +323,12 @@ export default function LandingPage() {
 
           {/* Live snapshot card — real index data */}
           <div data-parallax data-speed="-0.05" style={{ position: 'relative' }}>
-            <div style={{ position: 'relative', zIndex: 1, background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 18, padding: 20, boxShadow: '0 1px 2px 0 rgba(15,23,42,0.04)' }}>
+            <div style={{ position: 'relative', zIndex: 1, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, boxShadow: '0 12px 40px -12px rgba(0,0,0,0.6)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <span style={{ fontSize: 13, color: '#64748B', fontWeight: 500 }}>{heroIdx?.name ?? 'NIFTY 50'}</span>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 10px', borderRadius: 999, background: 'var(--primary-subtle)', border: '1px solid #A7F3D0' }}>
+                <span style={{ fontSize: 13, color: 'var(--muted-foreground)', fontWeight: 500 }}>{heroIdx?.name ?? 'NIFTY 50'}</span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 10px', borderRadius: 999, background: 'var(--primary-subtle)', border: '1px solid var(--risk-low-border)' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#047857' }}>LIVE</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--primary-hover)' }}>LIVE</span>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
@@ -335,22 +336,22 @@ export default function LandingPage() {
                   {heroIdx ? fmtIN(heroIdx.value) : '—'}
                 </span>
                 {heroIdx && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 999, background: heroIdx.change >= 0 ? '#ECFDF5' : '#FEF2F2', color: heroIdx.change >= 0 ? '#059669' : '#DC2626', fontFamily: MONO, fontSize: 13, fontWeight: 600 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 999, background: heroIdx.change >= 0 ? 'var(--primary-subtle)' : 'var(--delta-negative-bg)', color: heroIdx.change >= 0 ? 'var(--delta-positive)' : 'var(--delta-negative)', fontFamily: MONO, fontSize: 13, fontWeight: 600 }}>
                     {heroIdx.change >= 0 ? '▲' : '▼'} {heroIdx.change >= 0 ? '+' : ''}{heroIdx.changePct.toFixed(2)}%
                   </span>
                 )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
                 {heroMini.length > 0 ? heroMini.map(ix => (
-                  <div key={ix.symbol} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '11px 12px' }}>
-                    <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ix.name}</div>
+                  <div key={ix.symbol} style={{ background: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 12px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--subtle)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ix.name}</div>
                     <div style={{ fontFamily: MONO, fontSize: 14, fontWeight: 500 }}>{fmtIN(ix.value, 0)}</div>
-                    <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: ix.change >= 0 ? '#059669' : '#DC2626' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: ix.change >= 0 ? 'var(--delta-positive)' : 'var(--delta-negative)' }}>
                       {ix.change >= 0 ? '+' : ''}{ix.changePct.toFixed(2)}%
                     </div>
                   </div>
                 )) : [0, 1, 2].map(i => (
-                  <div key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '11px 12px', height: 62 }} />
+                  <div key={i} style={{ background: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 12px', height: 62 }} />
                 ))}
               </div>
             </div>
@@ -359,14 +360,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── Marquee (real NSE close snapshot) ────────────────────────────── */}
-      <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', padding: '16px 0', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(90deg,#FFFFFF,transparent)' }} />
-        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(270deg,#FFFFFF,transparent)' }} />
+      <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--background)', padding: '16px 0', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(90deg,var(--background),transparent)' }} />
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(270deg,var(--background),transparent)' }} />
         <div style={{ display: 'flex', width: 'max-content', animation: 'lpMarquee 48s linear infinite' }}>
           {[...TICKER, ...TICKER].map((t, i) => (
-            <div key={i} style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 9, padding: '0 22px', borderRight: '1px solid #E2E8F0' }}>
-              <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: '#334155' }}>{t.sym}</span>
-              <span style={{ fontFamily: MONO, fontSize: 13, color: '#64748B' }}>{t.price}</span>
+            <div key={i} style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 9, padding: '0 22px', borderRight: '1px solid var(--border)' }}>
+              <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)' }}>{t.sym}</span>
+              <span style={{ fontFamily: MONO, fontSize: 13, color: 'var(--muted-foreground)' }}>{t.price}</span>
               <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: t.c }}>{t.delta}</span>
             </div>
           ))}
@@ -378,10 +379,10 @@ export default function LandingPage() {
         <div data-reveal className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, opacity: 0, transform: 'translateY(28px)' }}>
           {STATS.map(s => (
             <div key={s.label} style={{ textAlign: 'center', padding: '8px 4px' }}>
-              <div style={{ fontFamily: MONO, fontSize: 'clamp(32px,4vw,46px)', fontWeight: 600, letterSpacing: '-0.02em', color: '#0F172A' }}>
+              <div style={{ fontFamily: MONO, fontSize: 'clamp(32px,4vw,46px)', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
                 {s.value != null ? s.value.toLocaleString('en-IN') : '—'}
               </div>
-              <div style={{ fontSize: 14, color: '#64748B', marginTop: 8 }}>{s.label}</div>
+              <div style={{ fontSize: 14, color: 'var(--muted-foreground)', marginTop: 8 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -391,17 +392,17 @@ export default function LandingPage() {
       <section id="features" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '40px 24px 90px' }}>
         <div data-reveal style={{ maxWidth: 620, margin: '0 auto 56px', textAlign: 'center', opacity: 0, transform: 'translateY(28px)' }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: ACCENT, marginBottom: 14 }}>EVERYTHING IN ONE TERMINAL</div>
-          <h2 style={{ fontSize: 'clamp(30px,4vw,46px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.08, margin: '0 0 16px' }}>Research that keeps up with the tape</h2>
-          <p style={{ fontSize: 17, lineHeight: 1.6, color: '#64748B', margin: 0 }}>Screen, track, and compare across the entire Indian market without juggling five tabs.</p>
+          <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(30px,4vw,46px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.08, margin: '0 0 16px' }}>Research that keeps up with the tape</h2>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--muted-foreground)', margin: 0 }}>Screen, track, and compare across the entire Indian market without juggling five tabs.</p>
         </div>
         <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {FEATURES.map(f => (
             <div key={f.key} data-reveal data-reveal-delay={f.delay} style={{ opacity: 0, transform: 'translateY(32px)' }}>
-              <div className="lp-feat" style={{ height: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: 26, transition: 'border-color 0.2s' }}>
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--primary-subtle)', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ACCENT, marginBottom: 20 }}
+              <div className="lp-feat" style={{ height: '100%', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 26, transition: 'border-color 0.2s' }}>
+                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--primary-subtle)', border: '1px solid var(--risk-low-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ACCENT, marginBottom: 20 }}
                   dangerouslySetInnerHTML={{ __html: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON_SVG[f.key]}</svg>` }} />
                 <h3 style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em', margin: '0 0 10px' }}>{f.title}</h3>
-                <p style={{ fontSize: 14.5, lineHeight: 1.6, color: '#64748B', margin: 0 }}>{f.desc}</p>
+                <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--muted-foreground)', margin: 0 }}>{f.desc}</p>
               </div>
             </div>
           ))}
@@ -413,9 +414,9 @@ export default function LandingPage() {
         <div data-reveal style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 36, flexWrap: 'wrap', gap: 16, opacity: 0, transform: 'translateY(28px)' }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: ACCENT, marginBottom: 12 }}>MARKET PULSE</div>
-            <h2 style={{ fontSize: 'clamp(28px,3.6vw,42px)', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Every index, drawn live</h2>
+            <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(28px,3.6vw,42px)', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Every index, drawn live</h2>
           </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#64748B', fontSize: 13, fontFamily: MONO }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--muted-foreground)', fontSize: 13, fontFamily: MONO }}>
             {/* No hardcoded freshness claim: fetchIndices silently falls back
                 to a static snapshot when the live feed is blocked, so
                 "updated just now" could sit over hours-old data. */}
@@ -425,13 +426,13 @@ export default function LandingPage() {
         <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
           {showcase.map((ix, i) => {
             const pos = ix.change >= 0
-            const c = pos ? '#059669' : '#DC2626'
+            const c = pos ? 'var(--delta-positive)' : 'var(--delta-negative)'
             return (
               <div key={ix.symbol} data-reveal data-reveal-delay={i * 70} style={{ opacity: 0, transform: 'translateY(30px)' }}>
-                <div className="lp-idx" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: 20, transition: 'border-color 0.2s' }}>
+                <div className="lp-idx" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 20, transition: 'border-color 0.2s' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{ix.name}</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 999, fontFamily: MONO, fontSize: 12, fontWeight: 600, color: c, background: pos ? '#ECFDF5' : '#FEF2F2' }}>{pos ? '▲' : '▼'} {pos ? '+' : ''}{ix.changePct.toFixed(2)}%</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{ix.name}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 999, fontFamily: MONO, fontSize: 12, fontWeight: 600, color: c, background: pos ? 'var(--primary-subtle)' : 'var(--delta-negative-bg)' }}>{pos ? '▲' : '▼'} {pos ? '+' : ''}{ix.changePct.toFixed(2)}%</span>
                   </div>
                   <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 600, letterSpacing: '-0.02em' }}>{fmtIN(ix.value)}</div>
                 </div>
@@ -443,11 +444,11 @@ export default function LandingPage() {
 
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section id="cta" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '20px 24px 110px' }}>
-        <div data-reveal style={{ position: 'relative', overflow: 'hidden', textAlign: 'center', border: '1px solid #E2E8F0', borderRadius: 24, padding: '80px 32px', background: '#FFFFFF', opacity: 0, transform: 'translateY(28px)' }}>
+        <div data-reveal style={{ position: 'relative', overflow: 'hidden', textAlign: 'center', border: '1px solid var(--border)', borderRadius: 24, padding: '80px 32px', background: 'var(--card)', opacity: 0, transform: 'translateY(28px)' }}>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <h2 style={{ fontSize: 'clamp(32px,4.6vw,56px)', fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.05, margin: '0 0 18px' }}>Start screening in seconds.</h2>
-            <p style={{ fontSize: 18, lineHeight: 1.6, color: '#64748B', maxWidth: 480, margin: '0 auto 36px' }}>No signup, no paywall. Open the terminal and read the market the way the pros do.</p>
-            <button data-magnetic className="lp-cta-btn" onClick={() => navigate('/funds')} style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: '#FFFFFF', background: ACCENT, border: 'none', padding: '17px 36px', borderRadius: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10, transition: 'transform 0.18s ease-out, background 0.2s' }}>
+            <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(32px,4.6vw,56px)', fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.05, margin: '0 0 18px' }}>Start screening in seconds.</h2>
+            <p style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 480, margin: '0 auto 36px' }}>No signup, no paywall. Open the terminal and read the market the way the pros do.</p>
+            <button data-magnetic className="lp-cta-btn" onClick={() => navigate('/funds')} style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '17px 36px', borderRadius: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10, transition: 'transform 0.18s ease-out, background 0.2s' }}>
               Launch the terminal
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </button>
@@ -456,43 +457,43 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer id="footer-about" style={{ position: 'relative', zIndex: 1, borderTop: '1px solid #E2E8F0', padding: '56px 24px 40px' }}>
+      <footer id="footer-about" style={{ position: 'relative', zIndex: 1, borderTop: '1px solid var(--border)', padding: '56px 24px 40px' }}>
         <div className="lp-footer" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 32 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
               <span style={{ width: 9, height: 9, borderRadius: '50%', background: ACCENT }} />
               <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>stonks</span>
             </div>
-            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: '#64748B', maxWidth: 280, margin: 0 }}>The fastest way to screen Indian mutual funds, indices and equities. Built for serious retail research.</p>
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 280, margin: 0 }}>The fastest way to screen Indian mutual funds, indices and equities. Built for serious retail research.</p>
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: '#94A3B8', marginBottom: 14 }}>PRODUCT</div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>PRODUCT</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {[['Fund Screener','/funds'],['Live Indices','/indices'],['Compare Engine','/compare']].map(([lbl, path]) => (
-                <button key={lbl} onClick={() => navigate(path)} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: '#64748B', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
+                <button key={lbl} onClick={() => navigate(path)} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--muted-foreground)', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
               ))}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: '#94A3B8', marginBottom: 14 }}>COMPANY</div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>COMPANY</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {['About','Methodology','Changelog'].map(lbl => (
-                <button key={lbl} onClick={() => scrollTo('cta')} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: '#64748B', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
+                <button key={lbl} onClick={() => scrollTo('cta')} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--muted-foreground)', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
               ))}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: '#94A3B8', marginBottom: 14 }}>DATA</div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>DATA</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {['NSE · BSE','EOD & Intraday','MFAPI + AMFI'].map(t => (
-                <span key={t} style={{ fontSize: 14, color: '#64748B' }}>{t}</span>
+                <span key={t} style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>{t}</span>
               ))}
             </div>
           </div>
         </div>
-        <div style={{ maxWidth: 1200, margin: '40px auto 0', paddingTop: 24, borderTop: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontSize: 12.5, color: '#94A3B8' }}>© 2026 stonks · Personal research only · Data may be delayed · Not financial advice</span>
-          <span style={{ fontSize: 12.5, color: '#94A3B8', fontFamily: MONO }}>built for the Indian markets</span>
+        <div style={{ maxWidth: 1200, margin: '40px auto 0', paddingTop: 24, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <span style={{ fontSize: 12.5, color: 'var(--subtle)' }}>© 2026 stonks · Personal research only · Data may be delayed · Not financial advice</span>
+          <span style={{ fontSize: 12.5, color: 'var(--subtle)', fontFamily: MONO }}>built for the Indian markets</span>
         </div>
       </footer>
     </div>

@@ -20,8 +20,18 @@ export default function RootLayout() {
     <div className="min-h-dvh bg-background flex flex-col">
       <header className="sticky top-0 z-10 bg-[var(--color-card)] border-b border-border">
         <div className="max-w-[1200px] mx-auto px-6 flex items-center h-12 gap-3">
-          <NavLink to="/dashboard" className="flex items-center pr-4 shrink-0 border-r border-border">
-            <span className="text-sm font-semibold text-foreground tracking-tight select-none">stonks</span>
+          <NavLink to="/dashboard" className="flex items-center gap-1.5 pr-4 shrink-0 border-r border-border">
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ background: 'var(--primary)', boxShadow: 'var(--glow-positive)' }}
+              aria-hidden="true"
+            />
+            <span
+              className="text-[15px] font-semibold text-foreground select-none"
+              style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', letterSpacing: '0.01em' }}
+            >
+              stonks
+            </span>
           </NavLink>
           <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto">
             {NAV.map(({ to, label, end }) => (
@@ -75,8 +85,8 @@ export default function RootLayout() {
       </main>
 
       <footer className="border-t border-border py-4">
-        <p className="text-center text-xs text-muted-foreground">
-          Personal research only · Data may be delayed · Not financial advice
+        <p className="text-center text-[11px] text-muted-foreground font-mono tracking-wide">
+          <span style={{ color: 'var(--primary)' }} aria-hidden="true">$</span> personal research only · data may be delayed · not financial advice
         </p>
       </footer>
     </div>
