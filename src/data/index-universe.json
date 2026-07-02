@@ -1,0 +1,11 @@
+[
+  { "nse": "NIFTY 50",         "name": "Nifty 50" },
+  { "nse": "NIFTY NEXT 50",    "name": "Nifty Next 50" },
+  { "nse": "NIFTY BANK",       "name": "Nifty Bank" },
+  { "nse": "NIFTY IT",         "name": "Nifty IT" },
+  { "nse": "NIFTY MIDCAP 100", "name": "Nifty Midcap 100" },
+  { "nse": "NIFTY SMLCAP 100", "name": "Nifty Smallcap 100" },
+  { "nse": "NIFTY PHARMA",     "name": "Nifty Pharma" },
+  { "nse": "NIFTY AUTO",       "name": "Nifty Auto" },
+  { "nse": "NIFTY FMCG",       "name": "Nifty FMCG" }
+]

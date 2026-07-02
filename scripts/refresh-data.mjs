@@ -7,7 +7,7 @@
 //    • public/amfi-active-codes.json  — AMFI active scheme codes (fund prune list)
 //    • public/indices-fallback.json   — live NSE index snapshot
 //    • public/stocks-fallback.json    — real EOD prices for the tracked universe
-//    • src/pages/LandingPage.tsx       — the marquee TICKER rows (between sentinels)
+//      (the landing marquee reads this same JSON at runtime — one copy of the data)
 //
 //  Run: npm run refresh-data   (Node ≥18, no dependencies)
 //
@@ -23,8 +23,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
-// Tracked equity universe — single source of truth for the marquee + stock
-// fallback. TATAMOTORS was retired in the Nov-2025 Tata Motors demerger; TMPV
+// Tracked equity universe — single source of truth for the stock
+// fallback (the landing marquee reads the same JSON). TATAMOTORS was retired in the Nov-2025 Tata Motors demerger; TMPV
 // (Passenger Vehicles) is its successor.
 const TRACKED = [
   'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK', 'SBIN', 'BHARTIARTL', 'ITC',
@@ -33,12 +33,11 @@ const TRACKED = [
 ]
 
 // (NSE indexSymbol) → display name, in the order the app shows them.
-const INDEX_MAP = [
-  ['NIFTY 50', 'Nifty 50'], ['NIFTY NEXT 50', 'Nifty Next 50'], ['NIFTY BANK', 'Nifty Bank'],
-  ['NIFTY IT', 'Nifty IT'], ['NIFTY MIDCAP 100', 'Nifty Midcap 100'],
-  ['NIFTY SMLCAP 100', 'Nifty Smallcap 100'], ['NIFTY PHARMA', 'Nifty Pharma'],
-  ['NIFTY AUTO', 'Nifty Auto'], ['NIFTY FMCG', 'Nifty FMCG'],
-]
+// Loaded from the SAME file the app imports (src/data/index-universe.json)
+// so the live path and this snapshot generator can never drift apart.
+const INDEX_MAP = JSON.parse(
+  await readFile(join(ROOT, 'src/data/index-universe.json'), 'utf8'),
+).map(({ nse, name }) => [nse, name])
 
 let failures = 0
 const log = (...a) => console.log('•', ...a)
@@ -157,7 +156,7 @@ async function refreshStocks() {
     eod.set(row[cSym], { prev: +row[cPrev], close: +row[cClose], vol: Math.round(+row[cVol]) })
   }
 
-  const stocks = []; const ticker = []; const dropped = []
+  const stocks = []; const dropped = []
   for (const s of TRACKED) {
     if (!names.has(s)) { dropped.push(`${s} (not in NSE listed master)`); continue }
     const b = eod.get(s)
@@ -166,26 +165,15 @@ async function refreshStocks() {
     const pct = b.prev ? +(change / b.prev * 100).toFixed(2) : 0
     // NSE's bhavcopy EOD file has no P/E or market cap columns — leave them
     // null rather than writing a fake 0 into the fallback snapshot.
-    stocks.push({ symbol: s, name: names.get(s), price: +b.close.toFixed(2), change, changePct: pct, volume: b.vol, pe: null, marketCap: null })
-    const priceStr = b.close.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    const up = pct >= 0
-    ticker.push(`['${s}','${priceStr}','${up ? '+' : ''}${pct.toFixed(2)}%',${up}]`)
+    stocks.push({ symbol: s, name: names.get(s), price: +b.close.toFixed(2), change, changePct: pct, volume: b.vol, pe: null })
   }
   if (stocks.length < TRACKED.length / 2) throw new Error(`only ${stocks.length}/${TRACKED.length} stocks resolved — refusing to overwrite`)
 
   await writeJson('public/stocks-fallback.json', stocks)
   log(`stocks-fallback.json → ${stocks.length} stocks (bhavcopy ${date})`)
   if (dropped.length) warn(`dropped tracked symbols: ${dropped.join(', ')}`)
-
-  // rewrite the LandingPage marquee rows between the sentinels
-  const lpPath = join(ROOT, 'src/pages/LandingPage.tsx')
-  const lp = await readFile(lpPath, 'utf8')
-  const rows = []
-  for (let i = 0; i < ticker.length; i += 2) rows.push('  ' + ticker.slice(i, i + 2).join(',') + ',')
-  const block = `  /* TICKER-DATA:START */\n${rows.join('\n')}\n  /* TICKER-DATA:END */`
-  const next = lp.replace(/ {2}\/\* TICKER-DATA:START \*\/[\s\S]*?\/\* TICKER-DATA:END \*\//, block)
-  if (next === lp && !lp.includes(block)) warn('LandingPage TICKER sentinels not found — marquee not updated')
-  else { await writeFile(lpPath, next); log('LandingPage.tsx → marquee refreshed') }
+  // (The landing marquee reads stocks-fallback.json at runtime — no more
+  // source-rewriting step; the snapshot is the single copy of this data.)
 }
 
 // ── run all sections independently ───────────────────────────────────────────

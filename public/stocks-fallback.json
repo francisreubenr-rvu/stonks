@@ -6,8 +6,7 @@
     "change": -7.1,
     "changePct": -0.55,
     "volume": 15695263,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "TCS",
@@ -16,8 +15,7 @@
     "change": -66.4,
     "changePct": -3.17,
     "volume": 6848411,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "HDFCBANK",
@@ -26,8 +24,7 @@
     "change": -0.95,
     "changePct": -0.12,
     "volume": 45778356,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "INFY",
@@ -36,8 +33,7 @@
     "change": -36.3,
     "changePct": -3.5,
     "volume": 24128263,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "ICICIBANK",
@@ -46,8 +42,7 @@
     "change": -12.4,
     "changePct": -0.89,
     "volume": 18398057,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "SBIN",
@@ -56,8 +51,7 @@
     "change": -9.2,
     "changePct": -0.89,
     "volume": 11161643,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "BHARTIARTL",
@@ -66,8 +60,7 @@
     "change": 10.9,
     "changePct": 0.59,
     "volume": 7233634,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "ITC",
@@ -76,8 +69,7 @@
     "change": -3.75,
     "changePct": -1.29,
     "volume": 18180676,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "LT",
@@ -86,8 +78,7 @@
     "change": -21.8,
     "changePct": -0.52,
     "volume": 1539094,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "AXISBANK",
@@ -96,8 +87,7 @@
     "change": -11.1,
     "changePct": -0.82,
     "volume": 7781221,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "KOTAKBANK",
@@ -106,8 +96,7 @@
     "change": -3.25,
     "changePct": -0.82,
     "volume": 24824891,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "HINDUNILVR",
@@ -116,8 +105,7 @@
     "change": -33.1,
     "changePct": -1.54,
     "volume": 2364422,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "BAJFINANCE",
@@ -126,8 +114,7 @@
     "change": 22.7,
     "changePct": 2.31,
     "volume": 12445420,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "MARUTI",
@@ -136,8 +123,7 @@
     "change": 703,
     "changePct": 5.24,
     "volume": 1511415,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "SUNPHARMA",
@@ -146,8 +132,7 @@
     "change": -12.3,
     "changePct": -0.66,
     "volume": 2352774,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "TMPV",
@@ -156,8 +141,7 @@
     "change": 7.15,
     "changePct": 2.07,
     "volume": 17609242,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "ADANIENT",
@@ -166,8 +150,7 @@
     "change": 73.5,
     "changePct": 2.48,
     "volume": 2099291,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   },
   {
     "symbol": "WIPRO",
@@ -176,7 +159,6 @@
     "change": -5.09,
     "changePct": -2.9,
     "volume": 26845383,
-    "pe": 0,
-    "marketCap": 0
+    "pe": 0
   }
 ]

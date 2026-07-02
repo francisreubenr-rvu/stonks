@@ -4,7 +4,7 @@
 
 ### A blazing-fast, keyless research terminal for the Indian markets
 
-Screen **14,000+ mutual funds**, track **every NSE & BSE index** live, compare equities side-by-side, and get an algorithmic **Buffett-principles fund shortlist** — all in one dark, data-dense midnight terminal. No signup, no paywall, no API keys.
+Screen **14,000+ mutual funds**, track **nine NSE benchmark indices** live, compare equities side-by-side, and get an algorithmic **Buffett-principles fund shortlist** — all in one dark, data-dense midnight terminal. No signup, no paywall, no API keys.
 
 **[🚀 Live demo → francisreubenr-rvu.github.io/stonks](https://francisreubenr-rvu.github.io/stonks/)**
 
@@ -29,12 +29,12 @@ Screen **14,000+ mutual funds**, track **every NSE & BSE index** live, compare e
 | 📊 | **Dashboard** | Live index cards (NIFTY 50, Bank, IT…), a real-time news ticker built from the day's actual movers, market-breadth advance/decline gauge, sector performance, and top gainers/losers. |
 | 🔍 | **Fund Screener** | Filter 14,000+ AMFI-active mutual fund schemes by risk, category and fund house; live search + client-side sort (popularity, 1Y return, risk, name); paginated. |
 | 📈 | **Fund Detail** | NAV history chart with selectable ranges, trailing CAGR (1M→inception), Sharpe / Sortino / annualised vol / max drawdown & recovery, monthly win-rate ring, calendar-year returns, and peer funds. |
-| 🌐 | **Live Indices** | Every broad + sector index, drawn from the live NSE snapshot. |
-| ⚖️ | **Compare** | Overlay up to 8 symbols side-by-side — price, change %, market cap, P/E, volume, exchange. |
-| 🏢 | **Symbol Detail** | 30-day price chart plus fundamentals (P/E, P/B, EPS, ROE, D/E, dividend yield, sector, industry). |
+| 🌐 | **Live Indices** | Nine NSE benchmarks — broad-market, size and sector gauges — from the live NSE feed, with an EOD-close snapshot fallback. |
+| ⚖️ | **Compare** | Overlay up to 8 symbols side-by-side — price, change %, P/E, volume, exchange. |
+| 🏢 | **Symbol Detail** | 30-day price chart plus the fundamentals NSE actually serves (P/E, sector, industry). |
 | ⭐ | **Watchlist** | Track symbols with live quotes — persisted in your browser. |
 | 💼 | **Portfolio** | Add holdings and see live P&L, day change, invested vs current value — persisted locally, never sent anywhere. |
-| 🏛️ | **The Banker** | "Oracle of Omaha" — scores funds against Warren Buffett's investing principles based on your risk profile, horizon and diversification, with an **optional DeepSeek AI** portfolio critique. |
+| 🏛️ | **The Banker** | "Oracle of Omaha" — scores funds against Warren Buffett's investing principles based on your risk profile, horizon and diversification. Fully algorithmic, fully client-side. |
 
 <div align="center">
   <img src="docs/screenshots/funds.png" alt="Fund screener" width="49%">
@@ -52,7 +52,6 @@ Every number on screen comes from a real source. There is no fabricated/placehol
 | **NSE India** (official public API, via CORS proxy) | Live index levels, equity quotes, EOD history | ❌ None |
 | **MFAPI.in** | Mutual fund NAVs & full history | ❌ None |
 | **AMFI** | Active scheme code manifest (prunes dead/defunct funds) | ❌ None |
-| **DeepSeek** | *Optional* AI portfolio analysis on the Banker page | ⚠️ Optional |
 
 - **Keyless by design.** The app ships with a small [Cloudflare Worker](api-proxy/worker.ts) that proxies NSE's public endpoints (handling cookies/CORS); in local dev, Vite's dev-server proxy does the same.
 - **Resilient.** If a live feed is unavailable, the app falls back to real NSE close snapshots (`public/*-fallback.json`) refreshed by [`scripts/refresh-data.mjs`](scripts/refresh-data.mjs) — never to invented numbers.
@@ -88,18 +87,7 @@ npm run dev            # → http://localhost:5173
 npm run build          # tsc --noEmit && vite build → dist/
 ```
 
-### Optional: DeepSeek AI analysis
-
-The Banker page can run an AI portfolio critique. Provide a key either in the UI, or via an env file:
-
-```bash
-# .env.local
-VITE_DEEPSEEK_KEY=sk-...
-```
-
-The key stays client-side and is only sent to DeepSeek when you click **Run AI Analysis**.
-
-> **Warning:** Vite inlines every `VITE_`-prefixed variable into the built JS bundle — if you build and *publish* the app with `VITE_DEEPSEEK_KEY` set, the key is readable by every visitor. Use it for local dev only; on a shared deployment, enter the key in the UI instead (stored in your own browser's localStorage).
+No API keys, no env files — there is nothing to configure.
 
 ---
 
@@ -126,7 +114,7 @@ python3 tests/e2e.py
 
 ```
 src/
-  api/            NSE / MFAPI / AMFI / DeepSeek clients + fallback logic + types
+  api/            NSE / MFAPI / AMFI clients + fallback logic + types
   hooks/          useDashboard, useFundList, useFundDetail, useIndicesSnapshot,
                   useCompareSet, useSymbolDetail, useWatchlist, useBanker,
                   useScrollReveal, useCountUp (motion)

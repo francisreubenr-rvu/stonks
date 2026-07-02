@@ -1,29 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useIndicesSnapshot } from '@/hooks/useIndicesSnapshot'
 import { useFundList } from '@/hooks/useFundList'
+import { loadStocksSnapshot } from '@/api/backupClient'
 
 const ACCENT = '#34D399' // phosphor green — literal (hexRgb needs RGB for the particle canvas)
 
 // ── Static data ─────────────────────────────────────────────────────────────
-
-// Real NSE close snapshot, regenerated from the equity bhavcopy. Do NOT hand-edit
-// the rows between the sentinels — run `npm run refresh-data` to refresh them from
-// the keyless NSE feed (keeps the marquee in lockstep with stocks-fallback.json).
-const TICKER = [
-  /* TICKER-DATA:START */
-  ['RELIANCE','1,293.90','-0.55%',false],['TCS','2,031.50','-3.17%',false],
-  ['HDFCBANK','797.95','-0.12%',false],['INFY','1,000.40','-3.50%',false],
-  ['ICICIBANK','1,375.20','-0.89%',false],['SBIN','1,026.90','-0.89%',false],
-  ['BHARTIARTL','1,852.00','+0.59%',true],['ITC','286.95','-1.29%',false],
-  ['LT','4,143.40','-0.52%',false],['AXISBANK','1,345.70','-0.82%',false],
-  ['KOTAKBANK','392.25','-0.82%',false],['HINDUNILVR','2,118.20','-1.54%',false],
-  ['BAJFINANCE','1,004.75','+2.31%',true],['MARUTI','14,115.00','+5.24%',true],
-  ['SUNPHARMA','1,862.50','-0.66%',false],['TMPV','352.20','+2.07%',true],
-  ['ADANIENT','3,036.00','+2.48%',true],['WIPRO','170.39','-2.90%',false],
-  /* TICKER-DATA:END */
-].map(([sym, price, delta, up]) => ({ sym, price, delta, c: up ? 'var(--delta-positive)' : 'var(--delta-negative)' }))
 
 const FEATURES = [
   { key: 'screener', title: 'Fund Screener',  delay: 0,   desc: 'Filter thousands of mutual funds by risk, category, expense ratio and trailing returns — results in milliseconds.' },
@@ -85,8 +70,24 @@ export default function LandingPage() {
   useScrollReveal(rootRef)
 
   // ── Real data ───────────────────────────────────────────────────────────
-  const { data: indices } = useIndicesSnapshot()
+  const { data: indicesResult } = useIndicesSnapshot()
+  const indices = indicesResult?.indices
   const { data: funds } = useFundList()
+  // Marquee rows come straight from the real NSE close snapshot — the same
+  // stocks-fallback.json the quote fallback uses. Previously this data was
+  // duplicated as a hardcoded array kept in sync by a source-rewriting step
+  // in refresh-data.mjs; now there is exactly one copy.
+  const { data: snapshot } = useQuery({
+    queryKey: ['stocksSnapshot'],
+    queryFn: loadStocksSnapshot,
+    staleTime: Infinity,
+  })
+  const ticker = (snapshot ?? []).map(q => ({
+    sym: q.symbol,
+    price: fmtIN(q.price),
+    delta: `${q.changePct >= 0 ? '+' : ''}${q.changePct.toFixed(2)}%`,
+    c: q.changePct >= 0 ? 'var(--delta-positive)' : 'var(--delta-negative)',
+  }))
   const idxList = indices ?? []
   const heroIdx = idxList.find(i => i.symbol === 'NIFTY 50') ?? idxList[0]
   const heroMini = idxList.filter(i => i.symbol !== heroIdx?.symbol).slice(0, 3)
@@ -360,19 +361,21 @@ export default function LandingPage() {
       </section>
 
       {/* ── Marquee (real NSE close snapshot) ────────────────────────────── */}
-      <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--background)', padding: '16px 0', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(90deg,var(--background),transparent)' }} />
-        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(270deg,var(--background),transparent)' }} />
-        <div style={{ display: 'flex', width: 'max-content', animation: 'lpMarquee 48s linear infinite' }}>
-          {[...TICKER, ...TICKER].map((t, i) => (
-            <div key={i} style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 9, padding: '0 22px', borderRight: '1px solid var(--border)' }}>
-              <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)' }}>{t.sym}</span>
-              <span style={{ fontFamily: MONO, fontSize: 13, color: 'var(--muted-foreground)' }}>{t.price}</span>
-              <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: t.c }}>{t.delta}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {ticker.length > 0 && (
+        <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--background)', padding: '16px 0', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(90deg,var(--background),transparent)' }} />
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 120, zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(270deg,var(--background),transparent)' }} />
+          <div style={{ display: 'flex', width: 'max-content', animation: 'lpMarquee 48s linear infinite' }}>
+            {[...ticker, ...ticker].map((t, i) => (
+              <div key={i} style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 9, padding: '0 22px', borderRight: '1px solid var(--border)' }}>
+                <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: 'var(--muted-foreground)' }}>{t.sym}</span>
+                <span style={{ fontFamily: MONO, fontSize: 13, color: 'var(--muted-foreground)' }}>{t.price}</span>
+                <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 600, color: t.c }}>{t.delta}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Stats band (real counts) ─────────────────────────────────────── */}
       <section style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '88px 24px' }}>
@@ -417,10 +420,9 @@ export default function LandingPage() {
             <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(28px,3.6vw,42px)', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Every index, drawn live</h2>
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--muted-foreground)', fontSize: 13, fontFamily: MONO }}>
-            {/* No hardcoded freshness claim: fetchIndices silently falls back
-                to a static snapshot when the live feed is blocked, so
-                "updated just now" could sit over hours-old data. */}
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} /> latest available data
+            {/* Honest provenance label — never claims "live" over snapshot data. */}
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
+            {indicesResult?.source === 'live' ? 'live feed' : 'last market close'}
           </div>
         </div>
         <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>

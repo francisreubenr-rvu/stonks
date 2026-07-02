@@ -28,7 +28,7 @@ export default function DashboardPage() {
   if (error) return <p className="text-sm text-destructive">{error?.message}</p>
   if (!data) return null
 
-  const hasAllZeros = data.indices.length > 0 && data.indices.every(i => i.value === 0 && i.change === 0 && i.changePct === 0)
+  const isSnapshot = !data.isLive && data.indices.length > 0
 
   // Real gainers/losers drive the scrolling ticker — no fabricated headlines.
   const tickerItems = [
@@ -39,9 +39,9 @@ export default function DashboardPage() {
 
   return (
     <div ref={rootRef}>
-      {hasAllZeros && (
+      {isSnapshot && (
         <div className="px-4 py-2 rounded-lg border border-border bg-card text-xs text-muted-foreground mb-6">
-          📡 Using cached data — live feed temporarily unavailable
+          📡 Showing the last market close snapshot — live feed unavailable
         </div>
       )}
 
@@ -52,7 +52,9 @@ export default function DashboardPage() {
           aside={
             <span className="font-mono text-sm text-muted-foreground inline-flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              Updated {new Date(data.lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+              {data.lastUpdated
+                ? `Updated ${new Date(data.lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
+                : 'EOD snapshot'}
             </span>
           }
         />

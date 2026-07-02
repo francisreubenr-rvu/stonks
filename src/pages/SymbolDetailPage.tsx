@@ -164,14 +164,10 @@ export default function SymbolDetailPage() {
             </p>
           </div>
           <div className="px-6">
-            <StatRow label="P/E"           value={fundamentals.pe !== null ? fundamentals.pe.toFixed(1) : null} />
-            <StatRow label="P/B"           value={fundamentals.pb !== null ? fundamentals.pb.toFixed(2) : null} />
-            <StatRow label="EPS"           value={fundamentals.eps !== null ? `₹${fundamentals.eps.toFixed(2)}` : null} />
-            <StatRow label="ROE"           value={fundamentals.roe !== null ? `${fundamentals.roe.toFixed(1)}%` : null} />
-            <StatRow label="Debt / Equity" value={fundamentals.debtToEquity !== null ? `${fundamentals.debtToEquity.toFixed(2)}×` : null} />
-            <StatRow label="Div. Yield"    value={fundamentals.dividendYield !== null ? `${fundamentals.dividendYield.toFixed(2)}%` : null} />
-            <StatRow label="Sector"        value={fundamentals.sector} />
-            <StatRow label="Industry"      value={fundamentals.industry} />
+            {/* Only fields NSE actually serves — no permanently-empty rows. */}
+            <StatRow label="P/E"      value={fundamentals.pe !== null ? fundamentals.pe.toFixed(1) : null} />
+            <StatRow label="Sector"   value={fundamentals.sector} />
+            <StatRow label="Industry" value={fundamentals.industry} />
           </div>
         </div>
       )}

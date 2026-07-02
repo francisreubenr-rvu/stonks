@@ -25,6 +25,14 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
 
 let quoteFallbackCache: Quote[] | null = null
 
+/** The real NSE close snapshot (public/stocks-fallback.json) — the single
+ *  source of truth for offline stock quotes. Exported so other surfaces
+ *  (e.g. the landing marquee) read the same file instead of carrying their
+ *  own copy of the data. */
+export async function loadStocksSnapshot(): Promise<Quote[]> {
+  return loadFallbackCache()
+}
+
 async function loadFallbackCache(): Promise<Quote[]> {
   if (quoteFallbackCache) return quoteFallbackCache
   try {
@@ -50,7 +58,7 @@ export async function fetchQuoteWithFallback(symbol: string): Promise<Quote> {
     const fallback = await loadFallbackCache().then(all =>
       all.find(q => q.symbol === cleanSymbol)
     )
-    if (fallback) return { ...fallback, exchange: 'NSE', marketCap: fallback.marketCap ?? null }
+    if (fallback) return { ...fallback, exchange: 'NSE' }
     throw e
   }
 }

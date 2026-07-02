@@ -23,7 +23,7 @@ export default function AboutPage() {
           <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Data Sources</p>
           <p className="text-[13px] text-muted-foreground leading-relaxed">
             MFAPI.in (mutual fund NAVs &amp; history) · NSE India official API (live
-            indices &amp; equity quotes, via CORS proxy) · DeepSeek (optional AI analysis).
+            indices &amp; equity quotes, via CORS proxy) · AMFI (active scheme manifest).
           </p>
         </div>
       </div>

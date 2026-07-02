@@ -5,9 +5,8 @@ export interface Quote {
   change: number
   changePct: number
   volume: number
-  // NSE's public endpoints don't expose these — null, not a fabricated 0,
-  // when unavailable on both the live and fallback-snapshot paths.
-  marketCap: number | null
+  // null when unavailable (the EOD snapshot has no P/E column) — never a
+  // fabricated 0. Market cap was removed entirely: no keyless source has it.
   pe: number | null
   exchange: 'NSE' | 'BSE'
 }
@@ -29,17 +28,13 @@ export interface EodBar {
   volume: number
 }
 
+// Only what NSE's public quote-equity endpoint actually provides. P/B, EPS,
+// ROE, D/E, dividend yield and market cap are NOT exposed by any keyless
+// source this app uses — they were removed rather than shipped as
+// permanently-empty rows implying data that never arrives.
 export interface Fundamentals {
   symbol: string
   pe: number | null
-  // NSE's public quote-equity endpoint does not expose these — always null
-  // until a real source is wired up. Never fabricate a zero for them.
-  pb: number | null
-  eps: number | null
-  roe: number | null
-  debtToEquity: number | null
-  dividendYield: number | null
-  marketCap: number | null
   sector: string
   industry: string
 }
@@ -130,7 +125,10 @@ export interface DashboardData {
   losers: MarketMover[]
   sectors: SectorPerformance[]
   advanceDecline: { advances: number; declines: number; unchanged: number }
-  lastUpdated: string
+  /** Fetch time of the LIVE feed — null when serving the EOD snapshot
+   *  (never stamp "now" onto snapshot data). */
+  lastUpdated: string | null
+  isLive: boolean
 }
 
 // ── Watchlist types ────────────────────────────────────────────────────────────

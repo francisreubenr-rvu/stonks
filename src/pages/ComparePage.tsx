@@ -110,13 +110,14 @@ export default function ComparePage() {
             </tr>
           </thead>
           <tbody>
+            {/* Market cap was removed — no keyless source provides it, and a
+                row of permanent em-dashes implies data that never arrives. */}
             {[
-              ['Price',       (q: { price: number }) => `₹${q.price.toFixed(2)}`],
-              ['Change %',   (q: { changePct: number }) => `${q.changePct >= 0 ? '+' : ''}${q.changePct.toFixed(2)}%`],
-              ['Market Cap', (q: { marketCap: number }) => q.marketCap ? `₹${(q.marketCap / 1e7).toFixed(0)} Cr` : '—'],
-              ['P/E',        (q: { pe: number }) => q.pe ? q.pe.toFixed(1) : '—'],
-              ['Volume',     (q: { volume: number }) => q.volume.toLocaleString('en-IN')],
-              ['Exchange',   (q: { exchange: string }) => q.exchange],
+              ['Price',     (q: { price: number }) => `₹${q.price.toFixed(2)}`],
+              ['Change %', (q: { changePct: number }) => `${q.changePct >= 0 ? '+' : ''}${q.changePct.toFixed(2)}%`],
+              ['P/E',      (q: { pe: number | null }) => q.pe ? q.pe.toFixed(1) : '—'],
+              ['Volume',   (q: { volume: number }) => q.volume.toLocaleString('en-IN')],
+              ['Exchange', (q: { exchange: string }) => q.exchange],
             ].map(([label, fmt]) => (
               <tr key={label as string} className="border-b border-border last:border-0 hover:bg-muted/20">
                 <td className="px-4 py-2.5 text-[12px] text-muted-foreground font-medium">

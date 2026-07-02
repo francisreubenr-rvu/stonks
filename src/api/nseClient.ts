@@ -1,20 +1,24 @@
 import type { IndexQuote } from './dataTypes'
 import { fetchAllIndicesRaw } from './nseApiClient'
+// Canonical tracked-index list — shared with scripts/refresh-data.mjs so the
+// live path, the fallback snapshot, and the refresh script can never drift.
+// (A previous drift here — the app asking for a nonexistent "NIFTY SMALLCAP
+// 500" while the snapshot carried NIFTY SMLCAP 100 — silently forced the app
+// onto fallback data forever.)
+// Note: SENSEX is a BSE index (absent from NSE's feed) — NIFTY NEXT 50 stands
+// in as the second broad-market gauge.
+import INDEX_UNIVERSE from '@/data/index-universe.json'
 
-// App-facing index list mapped to NSE's official `indexSymbol` values.
-// Note: SENSEX is a BSE index (absent from NSE's feed) — NIFTY NEXT 50 stands in
-// as the second broad-market gauge. Smallcap uses NSE's SMALLCAP 500.
-const INDICES: Array<{ nse: string; name: string }> = [
-  { nse: 'NIFTY 50',           name: 'Nifty 50' },
-  { nse: 'NIFTY NEXT 50',      name: 'Nifty Next 50' },
-  { nse: 'NIFTY BANK',         name: 'Nifty Bank' },
-  { nse: 'NIFTY IT',           name: 'Nifty IT' },
-  { nse: 'NIFTY MIDCAP 100',   name: 'Nifty Midcap 100' },
-  { nse: 'NIFTY SMALLCAP 500', name: 'Nifty Smallcap 500' },
-  { nse: 'NIFTY PHARMA',       name: 'Nifty Pharma' },
-  { nse: 'NIFTY AUTO',         name: 'Nifty Auto' },
-  { nse: 'NIFTY FMCG',         name: 'Nifty FMCG' },
-]
+const INDICES: Array<{ nse: string; name: string }> = INDEX_UNIVERSE
+
+/** Index data plus its provenance, so the UI can disclose honestly:
+ *  - live: fetched from NSE this session
+ *  - snapshot: the real EOD close snapshot shipped with the app
+ *  Never fabricated values; an empty array means "no data", not zeros. */
+export interface IndicesResult {
+  indices: IndexQuote[]
+  source: 'live' | 'snapshot'
+}
 
 let fallbackCache: IndexQuote[] | null = null
 
@@ -27,13 +31,12 @@ async function loadFallback(): Promise<IndexQuote[]> {
       return fallbackCache ?? []
     }
   } catch {}
-  fallbackCache = INDICES.map(({ nse, name }) => ({
-    symbol: nse, name, value: 0, change: 0, changePct: 0,
-  }))
-  return fallbackCache
+  // No snapshot available either — return NO data rather than synthesizing
+  // zero-valued rows. A zero is a number; missing data is not.
+  return []
 }
 
-export async function fetchIndices(): Promise<IndexQuote[]> {
+export async function fetchIndices(): Promise<IndicesResult> {
   try {
     const rows = await fetchAllIndicesRaw()
     const byName = new Map(rows.map(r => [r.indexSymbol, r]))
@@ -50,10 +53,10 @@ export async function fetchIndices(): Promise<IndexQuote[]> {
     // Only trust the live response if it covers every index we track —
     // otherwise prefer the complete, real fallback snapshot over a mix of
     // live + silently-missing gauges.
-    if (mapped.length === INDICES.length) return mapped
+    if (mapped.length === INDICES.length) return { indices: mapped, source: 'live' }
   } catch {
     // fall through to static fallback
   }
 
-  return loadFallback()
+  return { indices: await loadFallback(), source: 'snapshot' }
 }

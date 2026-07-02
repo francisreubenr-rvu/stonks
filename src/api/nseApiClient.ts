@@ -110,8 +110,6 @@ export async function fetchQuote(symbol: string): Promise<Quote> {
     change: p.change,
     changePct: p.pChange,
     volume: data.preOpenMarket?.totalTradedVolume ?? 0,
-    // Not exposed by NSE's quote-equity response — never fabricate a 0.
-    marketCap: null,
     pe: isFinite(pe) ? pe : null,
     exchange: 'NSE',
   }
@@ -145,14 +143,6 @@ export async function fetchFundamentals(symbol: string): Promise<Fundamentals | 
     return {
       symbol: s,
       pe: isFinite(pe) ? pe : null,
-      // NSE's quote-equity response does not carry P/B, EPS, ROE, D/E, or
-      // dividend yield — leave them unset rather than rendering a fake 0.
-      pb: null,
-      eps: null,
-      roe: null,
-      debtToEquity: null,
-      dividendYield: null,
-      marketCap: null,
       sector: data.industryInfo?.sector ?? 'N/A',
       industry: data.industryInfo?.industry ?? data.industryInfo?.basicIndustry ?? 'N/A',
     }

@@ -6,7 +6,6 @@ import { useDashboard } from '@/hooks/useDashboard'
 import { useSxEffects } from '@/hooks/useSxEffects'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
 import { oracleQuote, oracleWisdom, oracleSignOff, PRINCIPLES } from '@/lib/buffett'
-import { getApiKey, setApiKey, clearApiKey, analyzePortfolio, hasEnvKey } from '@/api/deepseekClient'
 import { RiskBadge } from '@/components/RiskBadge'
 import { SectionEyebrow } from '@/components/SectionEyebrow'
 
@@ -51,10 +50,6 @@ export default function BankerPage() {
   const [amount, setAmount] = useState('50000')
   const [frequency, setFrequency] = useState('Monthly')
   const [rescanKey, setRescanKey] = useState(0)
-  const [deepseekKey, setDeepseekKey] = useState(getApiKey() ?? '')
-  const [keySaved, setKeySaved] = useState(!!getApiKey())
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
   const rootRef = useSxEffects<HTMLDivElement>([step])
 
   const quote = useMemo(() => oracleQuote(step === 'scan' ? 'patience' : 'value'), [step])
@@ -83,9 +78,7 @@ export default function BankerPage() {
 
   const { title, desc } = PROFILE_LABELS[riskProfile]
 
-  // Every new scan invalidates any prior AI commentary — it described the
-  // previous shortlist, and letting it linger next to fresh picks is a lie.
-  function startScan() { setAiAnalysis(null); setStep('scan') }
+  function startScan() { setStep('scan') }
 
   // If scanning, show progress even while funds load
   if (step === 'scan' && (!schemes || schemes.length === 0)) {
@@ -249,50 +242,6 @@ export default function BankerPage() {
               </div>
             </div>
 
-            <div>
-              <p className="text-sm font-medium text-foreground mb-2">
-                DeepSeek API key <span className="text-xs text-muted-foreground">(optional — AI analysis)</span>
-              </p>
-              {hasEnvKey() ? (
-                <p className="text-sm text-primary">
-                  ✓ Detected from <span className="font-mono">VITE_DEEPSEEK_KEY</span>
-                </p>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={deepseekKey}
-                    onChange={e => setDeepseekKey(e.target.value)}
-                    placeholder="sk-..."
-                    className="flex-1 h-10 bg-muted border border-border rounded-md px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-                  />
-                  {keySaved ? (
-                    <button
-                      onClick={() => { clearApiKey(); setDeepseekKey(''); setKeySaved(false); setAiAnalysis(null) }}
-                      className="px-3 h-10 text-sm font-medium border border-border rounded-md text-muted-foreground hover:text-destructive cursor-pointer shrink-0"
-                    >
-                      Remove
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => { if (deepseekKey) { setApiKey(deepseekKey); setKeySaved(true) } }}
-                      className="px-3 h-10 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-[var(--primary-hover)] cursor-pointer shrink-0"
-                    >
-                      Save
-                    </button>
-                  )}
-                </div>
-              )}
-              {!hasEnvKey() && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Stored in this browser's local storage in plain text — anyone with device or script access to this
-                  site can read it. Use a key you're comfortable exposing client-side, and remove it when done.
-                </p>
-              )}
-              {keySaved && (
-                <p className="text-xs text-primary mt-1">API key saved — AI analysis runs after scan</p>
-              )}
-            </div>
           </div>
 
           <button
@@ -450,44 +399,6 @@ export default function BankerPage() {
                 )}
               </div>
 
-              {aiAnalysis && (
-                <div data-reveal className="border border-border rounded-lg p-4 bg-card mb-6">
-                  <p className="text-xs font-medium text-primary uppercase tracking-wider mb-2">
-                    🤖 DeepSeek Analysis
-                  </p>
-                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                    {aiAnalysis}
-                  </p>
-                </div>
-              )}
-
-              {getApiKey() && !aiAnalysis && topPicks.length > 0 && (
-                <div className="text-center pt-1 mb-6">
-                  <button
-                    onClick={async () => {
-                      setAiLoading(true)
-                      try {
-                        const funds = topPicks.map(p => ({
-                          name: p.scheme.n.split(' — ')[0],
-                          score: p.score,
-                          category: p.scheme.g,
-                        }))
-                        const analysis = await analyzePortfolio(funds, investProfile)
-                        setAiAnalysis(analysis)
-                      } catch (e: any) {
-                        setAiAnalysis(`Analysis unavailable: ${e.message}`)
-                      } finally {
-                        setAiLoading(false)
-                      }
-                    }}
-                    disabled={aiLoading}
-                    className="px-6 py-2 rounded-md border border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors duration-150 cursor-pointer disabled:opacity-50"
-                  >
-                    {aiLoading ? 'Analyzing…' : '🤖 Run AI Analysis'}
-                  </button>
-                </div>
-              )}
-
               <p className="text-center text-xs text-muted-foreground pt-2">
                 Algorithmic interpretation · Not financial advice
               </p>
@@ -495,7 +406,7 @@ export default function BankerPage() {
               {topPicks.length > 0 && (
                 <div className="text-center pt-1">
                   <button
-                    onClick={() => { setAiAnalysis(null); setRescanKey(k => k + 1) }}
+                    onClick={() => setRescanKey(k => k + 1)}
                     className="px-6 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-[var(--border-strong)] transition-colors duration-150 cursor-pointer"
                   >
                     ↻ Re-scan

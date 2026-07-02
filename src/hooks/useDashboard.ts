@@ -1,20 +1,25 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { DashboardData, MarketMover, SectorPerformance } from '@/api/dataTypes'
-import { fetchIndices } from '@/api/nseClient'
+import { fetchIndices, type IndicesResult } from '@/api/nseClient'
 
 export function useDashboard() {
-  const { data: indices = [], ...rest } = useQuery({
+  const { data: result, ...rest } = useQuery<IndicesResult>({
     queryKey: ['indices'],
     queryFn: fetchIndices,
     staleTime: 60_000,
     refetchInterval: 120_000,
   })
+  const indices = useMemo(() => result?.indices ?? [], [result])
+  const isLive = result?.source === 'live'
 
   const dashboard = useMemo<DashboardData>(() => {
-    const BROAD = new Set(['NIFTY 50', 'NIFTY NEXT 50', 'SENSEX'])
+    // Broad-market and SIZE indices are not sectors — Midcap/Smallcap gauges
+    // in a "Sector performance" panel would be a category error. Only true
+    // sector indices (Bank, IT, Pharma, Auto, FMCG) pass through.
+    const NON_SECTOR = new Set(['NIFTY 50', 'NIFTY NEXT 50', 'NIFTY MIDCAP 100', 'NIFTY SMLCAP 100'])
     const sectorIndices = indices.filter(i =>
-      i.symbol.includes('NIFTY') && !BROAD.has(i.symbol)
+      i.symbol.includes('NIFTY') && !NON_SECTOR.has(i.symbol)
     )
     // "gainers"/"losers"/"advanceDecline" below are derived from sector
     // INDICES (NIFTY IT, NIFTY PHARMA, ...), not individual stocks — the app
@@ -58,9 +63,12 @@ export function useDashboard() {
       losers,
       sectors,
       advanceDecline: { advances, declines, unchanged },
-      lastUpdated: new Date().toISOString(),
+      // Only claim a fetch time when the data actually came from the live
+      // feed this session — stamping "now" onto a static snapshot is a lie.
+      lastUpdated: isLive ? new Date().toISOString() : null,
+      isLive,
     }
-  }, [indices])
+  }, [indices, isLive])
 
   return { data: dashboard, ...rest }
 }

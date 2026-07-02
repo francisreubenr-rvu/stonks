@@ -31,20 +31,27 @@ export default function IndicesPage() {
   )
   if (error) return <p className="text-sm text-destructive">{error?.message}</p>
 
-  const hasAllZeros = data && data.length > 0 && data.every(i => i.value === 0 && i.change === 0 && i.changePct === 0)
+  const indices = data?.indices ?? []
+  const isSnapshot = data?.source === 'snapshot' && indices.length > 0
+
+  if (indices.length === 0) return (
+    <p className="text-sm text-muted-foreground">
+      Index data is unavailable right now — the live feed is unreachable and no local snapshot exists.
+    </p>
+  )
 
   return (
     <div ref={rootRef}>
-      {hasAllZeros && (
+      {isSnapshot && (
         <div className="px-4 py-2 rounded-lg border border-border bg-card text-xs text-muted-foreground mb-6">
-          📡 Using cached data — live feed temporarily unavailable
+          📡 Showing the last market close snapshot — live feed unavailable
         </div>
       )}
       <div data-reveal>
         <SectionEyebrow eyebrow="Market Pulse" title="Every index, drawn live" />
       </div>
       <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {data?.map((idx) => {
+        {indices.map((idx) => {
           const pos = idx.change >= 0
           return (
             <IndexCard
