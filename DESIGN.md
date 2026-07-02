@@ -1,96 +1,108 @@
 # Stonks — DESIGN.md
 
-Design system for **Stonks**, an Indian stock market research tool. Quiet, data-dense, professional. Light mode only. The aesthetic reference points are Linear, GitHub (light), and VS Code (light) — not a SaaS marketing site.
+Design system for **Stonks**, an Indian stock market research tool. **Midnight Terminal**: deep-ink surfaces, phosphor-green data, data-dense, editorial. The aesthetic reference points are a Bloomberg terminal at 2am and a well-set financial broadsheet — not a SaaS marketing site.
 
 This file is the source of truth for `figma-cli import`. Token names are stable identifiers; do not rename.
+
+> **Rework note (2026-07):** this system replaced the original light-only theme
+> after a side-by-side rebuild-and-compare. The token *contract* (names,
+> component specs, spacing, motion rules) is unchanged from the light system —
+> only values changed — so pages written against tokens re-skinned untouched.
 
 ---
 
 ## 0. Design Principles
 
-- **Light mode only.** No dark mode, no dark cards, no dark surfaces. Background is always white or near-white.
-- **One accent.** Emerald-600 (`#059669`) is the only brand color. It is used sparingly: primary CTA, active nav underline, positive financial delta, key highlights. Never as a background wash or decoration.
+- **Dark mode only.** Ink canvas (`#0A0D13`), raised-ink cards (`#10141C`). No white surfaces; light comes from the data, not the chrome.
+- **One accent.** Phosphor emerald (`#34D399`) is the only brand color. Used sparingly: primary CTA, active nav underline, positive financial delta, the live-dot. Never as a background wash or decoration.
 - **Color carries meaning.** Red = negative/destructive only. Amber/orange = risk badges only. Neither is ever decorative.
-- **Borders over shadows.** Prefer a 1px border to a drop shadow for separating surfaces.
-- **No gradients, no glassmorphism, no neon, no purple, no blue-500/indigo.**
+- **Borders over shadows.** Prefer a 1px hairline (`#1F2633`) to a drop shadow for separating static surfaces. Shadows exist only on floating layers (dropdowns, tooltips).
+- **No gradients as decoration, no glassmorphism, no purple, no blue-500/indigo.** The only permitted atmosphere is the fixed sub-2% scanline/vignette overlay defined in `index.css`.
 - **Data-dense but breathable.** Tight enough to scan a table at a glance; loose enough not to feel cramped.
+- **Numbers speak mono.** Every numeric value renders in IBM Plex Mono with tabular figures. Display headlines are Fraunces; body is IBM Plex Sans.
 
 ---
 
 ## 1. Color Tokens
 
-Source values are authored in OKLCH for perceptual consistency; hex is provided for direct use and Figma import. Where the two differ trivially, hex is canonical for implementation.
+Hex is canonical for implementation. All values live in `src/index.css` `:root`.
 
 ### 1.1 Background & Surface
 
-| Token | Hex | OKLCH | Usage |
-|---|---|---|---|
-| `color.background` | `#F8FAFC` | `oklch(0.984 0.003 247.858)` | App canvas / page background. Slate-50 off-white. |
-| `color.surface` | `#FFFFFF` | `oklch(1 0 0)` | Raised surfaces above background: sticky nav, popovers, table container. |
-| `color.card` | `#FFFFFF` | `oklch(1 0 0)` | Cards (index cards, fundamentals panel). Pure white, separated by `color.border`. |
-| `color.muted` | `#F1F5F9` | `oklch(0.968 0.007 247.896)` | Muted fills: table header row, inactive tab, code/symbol chips, hover wells. |
+| Token | Hex | Usage |
+|---|---|---|
+| `color.background` | `#0A0D13` | App canvas / page background. Deep ink. |
+| `color.surface` | `#10141C` | Raised surfaces above background: sticky nav, table container. |
+| `color.card` | `#10141C` | Cards (index cards, fundamentals panel). Raised ink, separated by `color.border`. |
+| `color.popover` | `#141924` | Floating layers: dropdowns, tooltips. |
+| `color.muted` | `#171C26` | Muted fills: table header row, inactive tab, code/symbol chips, hover wells. |
 
 ### 1.2 Foreground / Text
 
-| Token | Hex | OKLCH | Usage |
-|---|---|---|---|
-| `color.foreground` | `#0F172A` | `oklch(0.116 0.024 254.128)` | Primary text, headings, key values. Slate-900. |
-| `color.muted-foreground` | `#64748B` | `oklch(0.446 0.03 256.802)` | Secondary text: labels, captions, table sub-text, fund category. Slate-500. |
-| `color.subtle` | `#94A3B8` | `oklch(0.554 0.034 256.802)` | Tertiary: placeholders, disabled text, axis date labels, separators-as-text. Slate-400. |
+| Token | Hex | Usage |
+|---|---|---|
+| `color.foreground` | `#E7EDF4` | Primary text, headings, key values. Soft paper-white. |
+| `color.muted-foreground` | `#8B98AC` | Secondary text: labels, captions, table sub-text, fund category. |
+| `color.subtle` | `#5C6A80` | Tertiary: placeholders, disabled text, axis date labels. |
 
 ### 1.3 Semantic / Interactive
 
-| Token | Hex | OKLCH | Usage |
-|---|---|---|---|
-| `color.primary` | `#059669` | `oklch(0.596 0.145 163.225)` | Emerald-600. Primary button bg, active nav underline, focus ring, key highlight. |
-| `color.primary-hover` | `#047857` | `oklch(0.527 0.131 162.5)` | Emerald-700. Primary button hover. |
-| `color.primary-foreground` | `#FFFFFF` | `oklch(1 0 0)` | Text/icon on `color.primary`. |
-| `color.primary-subtle` | `#ECFDF5` | `oklch(0.979 0.021 166.1)` | Emerald-50. Active/selected highlight backgrounds. Use rarely. |
-| `color.destructive` | `#DC2626` | `oklch(0.577 0.245 27.325)` | Red-600. Destructive actions, error text, negative state. |
-| `color.destructive-hover` | `#B91C1C` | `oklch(0.514 0.222 27.3)` | Red-700. Destructive button hover. |
-| `color.border` | `#E2E8F0` | `oklch(0.929 0.013 255.508)` | Slate-200. Default border: cards, tables, dividers, inputs. |
-| `color.border-strong` | `#CBD5E1` | `oklch(0.869 0.022 252.9)` | Slate-300. Emphasized border: input hover, focused table outline. |
-| `color.input` | `#E2E8F0` | `oklch(0.929 0.013 255.508)` | Input border. |
-| `color.ring` | `#059669` | `oklch(0.596 0.145 163.225)` | Focus ring (matches primary). |
+| Token | Hex | Usage |
+|---|---|---|
+| `color.primary` | `#34D399` | Phosphor emerald. Primary button bg, active nav underline, focus ring, live-dot. |
+| `color.primary-hover` | `#6EE7B7` | Brighter on hover (dark-mode inversion of the usual darken). |
+| `color.primary-foreground` | `#06251A` | Text/icon on `color.primary` — near-black green. |
+| `color.primary-subtle` | `#0C2B1F` | Deep-green tint wells. Active/selected highlight backgrounds. Use rarely. |
+| `color.destructive` | `#F87171` | Red-400 (dark-contrast red). Destructive actions, error text, negative state. |
+| `color.destructive-hover` | `#FCA5A5` | Destructive hover. |
+| `color.border` | `#1F2633` | Hairline ink border: cards, tables, dividers, inputs. |
+| `color.border-strong` | `#2E3A4E` | Emphasized border: input hover, card hover. |
+| `color.input` | `#1F2633` | Input border. |
+| `color.ring` | `#34D399` | Focus ring (matches primary). |
 
 ### 1.4 Financial Semantic
 
 | Token | Hex | Usage |
 |---|---|---|
-| `color.delta-positive` | `#059669` | Positive returns / up deltas. Numbers + ▲ glyph. tabular-nums. |
-| `color.delta-positive-bg` | `#ECFDF5` | Tint behind up direction badge. |
-| `color.delta-negative` | `#DC2626` | Negative returns / down deltas. Numbers + ▼ glyph. tabular-nums. |
-| `color.delta-negative-bg` | `#FEF2F2` | Tint behind down direction badge. |
-| `color.delta-neutral` | `#64748B` | Flat / 0.00% delta. |
+| `color.delta-positive` | `#3DDC97` | Positive returns / up deltas. Numbers + ▲ glyph. tabular-nums. |
+| `color.delta-positive-bg` | `#0C2B1F` | Well behind up direction badge. |
+| `color.delta-negative` | `#F87171` | Negative returns / down deltas. Numbers + ▼ glyph. tabular-nums. |
+| `color.delta-negative-bg` | `#2B1418` | Well behind down direction badge. |
+| `color.delta-neutral` | `#8B98AC` | Flat / 0.00% delta. |
 
 ### 1.5 Risk Badges
 
-| Token | Hex | Usage |
+Dark wells with luminous text — same four-tier scale.
+
+| Token | bg | fg | border |
+|---|---|---|---|
+| `color.risk-low` | `#0C2B1F` | `#4ADE80` | `#1E5C40` |
+| `color.risk-moderate` | `#2A2410` | `#FACC15` | `#6B5D1A` |
+| `color.risk-high` | `#2B1B10` | `#FB923C` | `#7C4A1E` |
+| `color.risk-very-high` | `#2B1418` | `#F87171` | `#7F2A2E` |
+
+### 1.6 Atmosphere (rework-only tokens)
+
+| Token | Value | Usage |
 |---|---|---|
-| `color.risk-low.bg` | `#ECFDF5` | "Low" risk pill background. |
-| `color.risk-low.fg` | `#047857` | "Low" risk pill text. |
-| `color.risk-low.border` | `#A7F3D0` | "Low" risk pill border. |
-| `color.risk-moderate.bg` | `#FEFCE8` | "Moderate" risk pill bg. |
-| `color.risk-moderate.fg` | `#A16207` | "Moderate" risk pill text. |
-| `color.risk-moderate.border` | `#FDE68A` | "Moderate" risk pill border. |
-| `color.risk-high.bg` | `#FFF7ED` | "High" risk pill bg. |
-| `color.risk-high.fg` | `#C2410C` | "High" risk pill text. |
-| `color.risk-high.border` | `#FED7AA` | "High" risk pill border. |
-| `color.risk-very-high.bg` | `#FEF2F2` | "Very High" risk pill bg. |
-| `color.risk-very-high.fg` | `#B91C1C` | "Very High" risk pill text. |
-| `color.risk-very-high.border` | `#FECACA` | "Very High" risk pill border. |
+| `--glow-positive` | `0 0 14px rgba(61,220,151,0.28)` | Live-dot / phosphor accents only. Never on body text. |
+| `--glow-negative` | `0 0 14px rgba(248,113,113,0.22)` | Reserved; use sparingly. |
+| `--shadow-dropdown` | `0 8px 24px -4px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)` | Floating layers only. |
+
+The fixed body overlay (scanlines at 1.5% + a top phosphor vignette at 5%) is defined once in `index.css` and must stay below 2% perceived opacity.
 
 ---
 
 ## 2. Typography
 
-No custom web font. System stack only.
+Three-family system, loaded via Google Fonts (`index.html`) with system fallbacks.
 
 ### 2.1 Font Families
 
 ```
-font.sans:  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
-font.mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace
+font.display: "Fraunces", Georgia, serif              — h1/h2, hero headlines, wordmark (italic)
+font.body:    "IBM Plex Sans", system-ui, sans-serif  — body, labels, controls
+font.data:    "IBM Plex Mono", ui-monospace, Menlo, monospace — every numeric value, tickers, code
 ```
 
 ### 2.2 Type Scale
@@ -176,8 +188,8 @@ Minimal. Prefer `1px solid color.border` over shadows for static surfaces.
 
 ```
 height:            48px
-background:        #FFFFFF (color.surface)
-border-bottom:     1px solid #E2E8F0 (color.border)
+background:        #10141C (color.surface)
+border-bottom:     1px solid #1F2633 (color.border)
 padding-x:         24px
 position:          sticky, top: 0, z-index: 10
 
@@ -194,13 +206,13 @@ Nav links: text.sm, weight.medium
 ```
 height:            40px
 padding-x:         16px
-background:        #059669 (color.primary)
-text:              #FFFFFF, text.sm, weight.medium
+background:        #34D399 (color.primary)
+text:              #06251A, text.sm, weight.medium
 radius:            6px (radius.md)
-hover:             background #047857 (color.primary-hover)
-active:            background #036A4E
+hover:             background #6EE7B7 (color.primary-hover)
+active:            background #A7F3D0
 transition:        background 150ms ease-out
-focus-visible:     2px ring #059669, 2px offset
+focus-visible:     2px ring #34D399, 2px offset
 ```
 
 ### 6.3 Outline Button
@@ -212,26 +224,26 @@ background:        transparent
 text:              color.foreground, text.sm, weight.medium
 border:            1px solid color.border
 radius:            6px
-hover:             background #F8FAFC, border color.border-strong
+hover:             background #171C26, border color.border-strong
 transition:        150ms ease-out
 ```
 
 ### 6.4 Index Card
 
 ```
-background:        #FFFFFF
-border:            1px solid #E2E8F0
+background:        #10141C
+border:            1px solid #1F2633
 radius:            6px
 padding:           16px
 gap (internal):    8px
-hover:             border-color #CBD5E1, 150ms ease-out
+hover:             border-color #2E3A4E, 150ms ease-out
 
 Contents:
 1. Symbol row: ticker (font.mono, text.sm, weight.medium, color.muted-foreground)
                + direction badge (right-aligned)
    Direction badge: radius.full, text.xs, weight.medium, px 8px py 4px
-     Up:   bg #ECFDF5, text #059669, glyph ▲
-     Down: bg #FEF2F2, text #DC2626, glyph ▼
+     Up:   bg #0C2B1F, text #3DDC97, glyph ▲
+     Down: bg #2B1418, text #F87171, glyph ▼
 
 2. Index name: text.sm, color.muted-foreground
 
@@ -254,10 +266,10 @@ Cells:
 - Fund name:   text.sm, color.foreground, weight.medium (line-clamp 2)
 - Category:    text.xs, color.muted-foreground
 - Risk badge:  radius.full, text.xs, weight.medium, px 8px py 2px
-               Low:       bg #ECFDF5 / text #047857 / border #A7F3D0
-               Moderate:  bg #FEFCE8 / text #A16207 / border #FDE68A
-               High:      bg #FFF7ED / text #C2410C / border #FED7AA
-               Very High: bg #FEF2F2 / text #B91C1C / border #FECACA
+               Low:       bg #0C2B1F / text #4ADE80 / border #1E5C40
+               Moderate:  bg #2A2410 / text #FACC15 / border #6B5D1A
+               High:      bg #2B1B10 / text #FB923C / border #7C4A1E
+               Very High: bg #2B1418 / text #F87171 / border #7F2A2E
 - Returns:     font.mono, text.sm, tabular-nums, right-aligned
                Positive: color.delta-positive | Negative: color.delta-negative
                Always show sign (+/−)
@@ -267,7 +279,7 @@ Cells:
 ### 6.6 Symbol Header
 
 ```
-container:         #FFFFFF bg, 1px border #E2E8F0, radius 8px, padding 24px
+container:         #10141C bg, 1px border #1F2633, radius 8px, padding 24px
 
 Ticker:   font.mono, text.2xl (24px), weight.bold, color.foreground
 Name:     font.sans, text.sm, color.muted-foreground, 4px below ticker
@@ -275,8 +287,8 @@ Price:    font.mono, text.3xl (30px), weight.semibold, color.foreground, tabular
 
 Delta badge (inline, beside price):
   radius.full, text.sm, weight.medium, px 8px py 4px, tabular-nums
-  Up:   bg #ECFDF5, text #059669, ▲ +X.XX (+Y.YY%)
-  Down: bg #FEF2F2, text #DC2626, ▼ −X.XX (−Y.YY%)
+  Up:   bg #0C2B1F, text #3DDC97, ▲ +X.XX (+Y.YY%)
+  Down: bg #2B1418, text #F87171, ▼ −X.XX (−Y.YY%)
 
 Volume: font.mono, text.xs, color.subtle, 4px below price row
 ```
@@ -286,9 +298,9 @@ Volume: font.mono, text.xs, color.subtle, 4px below price row
 ```
 height:            160px plot area
 bars:              30 bars, 2px gap, radius.none (no rounding)
-bar fill:          Up: #059669  |  Down: #DC2626
+bar fill:          Up: #3DDC97  |  Down: #F87171
 bar min-height:    2px
-baseline:          1px #E2E8F0 under bars
+baseline:          1px #1F2633 under bars
 date labels:       text.xs, color.subtle, font.mono — left end (oldest) and right end (latest) only
 hover per bar:     tooltip with shadow.dropdown — date + ₹close, font.mono
 no axes, no gridlines, no Y-axis ticks
@@ -297,7 +309,7 @@ no axes, no gridlines, no Y-axis ticks
 ### 6.8 Fundamentals Grid
 
 ```
-container:         #FFFFFF bg, 1px border #E2E8F0, radius 8px, padding 24px
+container:         #10141C bg, 1px border #1F2633, radius 8px, padding 24px
 
 columns:           2-col at ≥640px (sm+), 1-col below
 row:               label (left, text.sm, color.muted-foreground)
@@ -349,21 +361,22 @@ which still follows the color/opacity-only rule above. Implemented in
 
 | Pair | Ratio | Status |
 |---|---|---|
-| foreground `#0F172A` on background `#F8FAFC` | ~16.5:1 | AAA |
-| foreground `#0F172A` on card `#FFFFFF` | ~17.4:1 | AAA |
-| muted-foreground `#64748B` on `#FFFFFF` | ~4.8:1 | AA |
-| primary-foreground `#FFFFFF` on primary `#059669` | ~3.9:1 | AA (UI/large) |
-| delta-positive `#059669` on `#FFFFFF` | ~3.9:1 | AA (large/UI ≥14px medium) |
-| delta-negative `#DC2626` on `#FFFFFF` | ~4.5:1 | AA |
-| risk-moderate.fg `#A16207` on `#FEFCE8` | ~5.6:1 | AA |
-| risk-high.fg `#C2410C` on `#FFF7ED` | ~5.2:1 | AA |
+| foreground `#E7EDF4` on background `#0A0D13` | ~16.5:1 | AAA |
+| foreground `#E7EDF4` on card `#10141C` | ~15.4:1 | AAA |
+| muted-foreground `#8B98AC` on card `#10141C` | ~5.9:1 | AA |
+| primary-foreground `#06251A` on primary `#34D399` | ~9.5:1 | AAA |
+| delta-positive `#3DDC97` on card `#10141C` | ~9.7:1 | AAA |
+| delta-negative `#F87171` on card `#10141C` | ~6.3:1 | AA |
+| risk-moderate.fg `#FACC15` on `#2A2410` | ~9.6:1 | AAA |
+| risk-high.fg `#FB923C` on `#2B1B10` | ~7.2:1 | AAA |
+| subtle `#5C6A80` on background `#0A0D13` | ~3.5:1 | Large/decorative only — never body copy |
 
-**Note:** delta-positive/primary clears AA only at large/UI sizes. Never use below 14px or weight < 500. Always pair with ▲/▼ glyph and +/− sign so meaning never relies on color alone.
+**Note:** the dark inversion materially improved delta and on-primary contrast vs the light system (both were AA-large-only; now AAA). `color.subtle` remains restricted to ≥14px decorative text. Always pair deltas with ▲/▼ glyph and +/− sign so meaning never relies on color alone.
 
 ### Focus
 
 ```
-outline: 2px solid #059669 (color.ring)
+outline: 2px solid #34D399 (color.ring)
 outline-offset: 2px
 ```
 

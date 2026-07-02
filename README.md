@@ -4,7 +4,7 @@
 
 ### A blazing-fast, keyless research terminal for the Indian markets
 
-Screen **14,000+ mutual funds**, track **every NSE & BSE index** live, compare equities side-by-side, and get an algorithmic **Buffett-principles fund shortlist** — all in one quiet, data-dense terminal. No signup, no paywall, no API keys.
+Screen **14,000+ mutual funds**, track **every NSE & BSE index** live, compare equities side-by-side, and get an algorithmic **Buffett-principles fund shortlist** — all in one dark, data-dense midnight terminal. No signup, no paywall, no API keys.
 
 **[🚀 Live demo → francisreubenr-rvu.github.io/stonks](https://francisreubenr-rvu.github.io/stonks/)**
 
@@ -67,7 +67,7 @@ See [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) for the full data-flow breakd
 - **Framework** — React 19 + TypeScript, [Vite 8](https://vite.dev)
 - **Data layer** — [TanStack Query](https://tanstack.com/query) (caching, retries, background refetch) + `idb-keyval` persistence
 - **Routing** — React Router 7 (`HashRouter`, GitHub-Pages friendly)
-- **Styling** — Tailwind CSS v4 + a token-driven design system ([`DESIGN.md`](DESIGN.md)) — light-mode, data-dense, borders over shadows
+- **Styling** — Tailwind CSS v4 + a token-driven design system ([`DESIGN.md`](DESIGN.md)) — "Midnight Terminal": dark ink, phosphor-green data, Fraunces/IBM Plex type, data-dense, borders over shadows
 - **UI** — Radix primitives, `lucide-react`, `class-variance-authority`, hand-built SVG/canvas charts (no chart lib)
 - **Tooling** — [oxlint](https://oxc.rs), Playwright E2E ([`tests/e2e.py`](tests/e2e.py))
 - **Proxy** — Cloudflare Worker (`wrangler`)
