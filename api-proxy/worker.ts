@@ -105,8 +105,58 @@ async function nseFetch(targetPath: string): Promise<Response> {
   return res
 }
 
+// ── NVIDIA NIM proxy ─────────────────────────────────────────────────────────
+// integrate.api.nvidia.com sends no CORS headers, so the browser can't call it
+// directly — and the key must never ship in the client bundle anyway. The key
+// lives here as a Worker secret:  npx wrangler secret put NIM_API_KEY
+// Model is pinned server-side to a free-tier chat model; the client cannot
+// choose the model or exceed the token cap.
+const NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions'
+const NIM_MODEL = 'meta/llama-3.1-8b-instruct'
+const NIM_MAX_TOKENS = 600
+
+interface Env {
+  NIM_API_KEY?: string
+}
+
+async function nimChat(request: Request, env: Env, origin: string): Promise<Response> {
+  const headers = { ...corsHeaders(origin), 'Content-Type': 'application/json' }
+  if (!env.NIM_API_KEY) {
+    return new Response(JSON.stringify({ error: 'NIM key not configured' }), { status: 503, headers })
+  }
+  let body: { messages?: Array<{ role: string; content: string }> }
+  try {
+    body = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'invalid JSON' }), { status: 400, headers })
+  }
+  const messages = (body.messages ?? []).slice(0, 8).map(m => ({
+    role: m.role === 'system' ? 'system' : 'user',
+    content: String(m.content).slice(0, 6000),
+  }))
+  if (messages.length === 0) {
+    return new Response(JSON.stringify({ error: 'messages required' }), { status: 400, headers })
+  }
+  const upstream = await fetch(NIM_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.NIM_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: NIM_MODEL,
+      messages,
+      temperature: 0.4,
+      max_tokens: NIM_MAX_TOKENS,
+      stream: false,
+    }),
+  })
+  const text = await upstream.text()
+  return new Response(text, { status: upstream.status, headers })
+}
+
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const origin = request.headers.get('Origin') ?? ''
 
     if (request.method === 'OPTIONS') {
@@ -116,7 +166,7 @@ export default {
       return new Response(null, {
         headers: {
           ...corsHeaders(origin),
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Accept',
           'Access-Control-Max-Age': '86400',
         },
@@ -139,6 +189,15 @@ export default {
     }
 
     const url = new URL(request.url)
+
+    // NIM chat proxy — POST only, key held server-side, model pinned.
+    if (url.pathname === '/api/nim/chat') {
+      if (request.method !== 'POST') {
+        return new Response('Method not allowed', { status: 405, headers: corsHeaders(origin) })
+      }
+      return nimChat(request, env, origin)
+    }
+
     if (!url.pathname.startsWith(PROXY_PREFIX)) {
       return new Response('Not found', { status: 404, headers: corsHeaders(origin) })
     }

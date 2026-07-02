@@ -6,6 +6,7 @@ import { useDashboard } from '@/hooks/useDashboard'
 import { useSxEffects } from '@/hooks/useSxEffects'
 import { PROFILE_LABELS, type BankerRisk, type InvestmentProfile } from '@/lib/banker'
 import { oracleQuote, oracleWisdom, oracleSignOff, PRINCIPLES } from '@/lib/buffett'
+import { commentOnPicks, NimUnavailableError } from '@/api/nimClient'
 import { RiskBadge } from '@/components/RiskBadge'
 import { SectionEyebrow } from '@/components/SectionEyebrow'
 
@@ -50,6 +51,8 @@ export default function BankerPage() {
   const [amount, setAmount] = useState('50000')
   const [frequency, setFrequency] = useState('Monthly')
   const [rescanKey, setRescanKey] = useState(0)
+  const [aiText, setAiText] = useState<string | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
   const rootRef = useSxEffects<HTMLDivElement>([step])
 
   const quote = useMemo(() => oracleQuote(step === 'scan' ? 'patience' : 'value'), [step])
@@ -61,7 +64,7 @@ export default function BankerPage() {
   const wisdom = useMemo(() => oracleWisdom(investProfile), [investProfile])
   const signOff = useMemo(() => oracleSignOff(), [])
 
-  const { candidates, isScanning, progress, total } = useBanker(
+  const { candidates, isScanning, progress, total, scannedCount } = useBanker(
     schemes ?? EMPTY_SCHEMES,
     riskProfile,
     investProfile,
@@ -70,15 +73,33 @@ export default function BankerPage() {
     step === 'scan',
   )
 
-  // topPicks is ALWAYS exactly fundCount items — enforced at every render
-  const topPicks = candidates
-    .slice() // defensive copy
-    .sort((a, b) => b.score - a.score)
-    .slice(0, Math.min(fundCount, candidates.length))
+  // topPicks: best-scoring funds with a category-diversity cap, so a cohort
+  // where low-volatility debt categories rank well on drawdown/win-rate
+  // percentiles can't sweep every slot. At most ceil(N/3) per category,
+  // relaxed in a second pass if that leaves the list short.
+  const topPicks = useMemo(() => {
+    const sorted = [...candidates].sort((a, b) => b.score - a.score)
+    const cap = Math.max(1, Math.ceil(fundCount / 3))
+    const perCat = new Map<string, number>()
+    const picks: typeof sorted = []
+    for (const c of sorted) {
+      if (picks.length >= fundCount) break
+      const n = perCat.get(c.scheme.g) ?? 0
+      if (n >= cap) continue
+      perCat.set(c.scheme.g, n + 1)
+      picks.push(c)
+    }
+    for (const c of sorted) {
+      if (picks.length >= fundCount) break
+      if (!picks.includes(c)) picks.push(c)
+    }
+    return picks
+  }, [candidates, fundCount])
 
   const { title, desc } = PROFILE_LABELS[riskProfile]
 
-  function startScan() { setStep('scan') }
+  // New scan invalidates prior AI commentary — it described the old shortlist.
+  function startScan() { setAiText(null); setStep('scan') }
 
   // If scanning, show progress even while funds load
   if (step === 'scan' && (!schemes || schemes.length === 0)) {
@@ -273,7 +294,7 @@ export default function BankerPage() {
               <div className="flex items-center gap-3">
                 <span className="w-3 h-3 rounded-full bg-primary" style={{ animation: 'sxPulse 1.1s ease-in-out infinite' }} />
                 <span className="text-sm text-foreground font-medium">
-                  The Oracle is analyzing {total} funds…
+                  The Oracle is reading NAV histories — {scannedCount} funds examined, {total} scoreable…
                 </span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -293,7 +314,7 @@ export default function BankerPage() {
                     The Oracle's Picks
                   </p>
                   <span className="text-xs text-muted-foreground">
-                    Scored by Buffett's principles
+                    Growth plans only · scored against {total} scanned peers · established houses weighted
                   </span>
                 </div>
 
@@ -399,6 +420,56 @@ export default function BankerPage() {
                 )}
               </div>
 
+              {/* Optional AI commentary — narrates the real computed numbers via
+                  the NIM proxy (key lives as a Worker secret, never client-side). */}
+              {!isScanning && topPicks.length > 0 && (
+                <div className="mb-6">
+                  {aiText ? (
+                    <div data-reveal className="border border-border rounded-lg p-4 bg-card">
+                      <p className="text-xs font-medium text-primary uppercase tracking-wider mb-2">
+                        Oracle's Commentary
+                      </p>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{aiText}</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <button
+                        disabled={aiBusy}
+                        onClick={async () => {
+                          setAiBusy(true)
+                          try {
+                            const text = await commentOnPicks(
+                              topPicks.map(p => ({
+                                name: p.scheme.n.split(' - ')[0],
+                                category: p.scheme.g,
+                                score: p.score,
+                                cagr1y: p.stats.cagr1y,
+                                sortino: p.stats.sortino,
+                                maxDrawdown: p.stats.maxDrawdown,
+                                winRate: p.stats.winRate,
+                              })),
+                              { risk: riskProfile, horizon, fundCount, frequency },
+                            )
+                            setAiText(text)
+                          } catch (e) {
+                            setAiText(
+                              e instanceof NimUnavailableError
+                                ? 'AI commentary is not configured — set NIM_API_KEY on the proxy worker to enable it.'
+                                : `Commentary unavailable: ${e instanceof Error ? e.message : 'unknown error'}`,
+                            )
+                          } finally {
+                            setAiBusy(false)
+                          }
+                        }}
+                        className="px-6 py-2 rounded-md border border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors duration-150 cursor-pointer disabled:opacity-50"
+                      >
+                        {aiBusy ? 'Reading the numbers…' : "Get the Oracle's commentary"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <p className="text-center text-xs text-muted-foreground pt-2">
                 Algorithmic interpretation · Not financial advice
               </p>
@@ -406,7 +477,7 @@ export default function BankerPage() {
               {topPicks.length > 0 && (
                 <div className="text-center pt-1">
                   <button
-                    onClick={() => setRescanKey(k => k + 1)}
+                    onClick={() => { setAiText(null); setRescanKey(k => k + 1) }}
                     className="px-6 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-[var(--border-strong)] transition-colors duration-150 cursor-pointer"
                   >
                     ↻ Re-scan

@@ -9,7 +9,11 @@ const RISK_ORDER: Record<number, number> = {
 const RISK_TO_PROFILE: Record<BankerRisk, { min: number; max: number }> = {
   Conservative: { min: 0, max: 1 },
   Moderate:     { min: 0, max: 2 },
-  Aggressive:   { min: 1, max: 3 },
+  // Floor of 2: an Aggressive ("maximize returns") scan pools equity and
+  // equity-like funds only — tier-0/1 debt (liquid, floaters, credit risk)
+  // was previously outranking equity on volatility percentiles and sweeping
+  // shortlists that promised maximum growth.
+  Aggressive:   { min: 2, max: 3 },
 }
 
 export function filterByProfile(schemes: LightFund[], profile: BankerRisk): LightFund[] {

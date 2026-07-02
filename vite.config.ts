@@ -41,6 +41,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // AI commentary goes through the deployed Worker even in dev — the NIM
+      // key exists only as a Worker secret, never locally.
+      '/api/nim': {
+        target: 'https://stonks-proxy.francisreubenrbtech25.workers.dev',
+        changeOrigin: true,
+      },
       '/api/nse': {
         target: NSE_ORIGIN,
         changeOrigin: true,
