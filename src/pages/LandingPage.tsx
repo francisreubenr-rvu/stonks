@@ -5,22 +5,15 @@ import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useIndicesSnapshot } from '@/hooks/useIndicesSnapshot'
 import { useFundList } from '@/hooks/useFundList'
 import { loadStocksSnapshot } from '@/api/backupClient'
+import { Logo, LogoMark } from '@/components/Logo'
 
 const ACCENT = '#34D399' // phosphor green — literal (hexRgb needs RGB for the particle canvas)
 
 // ── Static data ─────────────────────────────────────────────────────────────
 
-const FEATURES = [
-  { key: 'screener', title: 'Fund Screener',  delay: 0,   desc: 'Filter thousands of mutual funds by risk, category, expense ratio and trailing returns — results in milliseconds.' },
-  { key: 'indices',  title: 'Live Indices',   delay: 90,  desc: 'NIFTY 50, SENSEX, BANK NIFTY and every sector index, redrawn in real time with EOD history on tap.' },
-  { key: 'compare',  title: 'Compare Engine', delay: 180, desc: 'Overlay any funds and equities on one normalized chart and read relative performance at a glance.' },
-]
-
-const ICON_SVG: Record<string, string> = {
-  screener: '<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="8" cy="18" r="2" fill="currentColor"/>',
-  indices:  '<line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/>',
-  compare:  '<path d="M3 17l5-5 4 3 8-9"/><path d="M3 21l6-3 4 2 8-6" opacity="0.5"/>',
-}
+// Risk-math metric chips for the bento — every one of these is actually
+// computed per fund in lib/fundStats.ts. Do not list metrics we don't compute.
+const RISK_METRICS = ['Sharpe', 'Sortino', 'Max drawdown', 'Recovery days', 'Win rate', 'Rolling 1Y', 'CAGR 1M→inception', 'Annualised vol']
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -51,6 +44,8 @@ const LP_CSS = `
     .lp-hero { grid-template-columns: 1fr !important; gap: 28px !important; padding-top: 96px !important; }
     .lp-navlinks { display: none !important; }
     .lp-grid3 { grid-template-columns: 1fr !important; }
+    .lp-bento { grid-template-columns: 1fr !important; }
+    .lp-bento > div { grid-column: auto !important; grid-row: auto !important; }
     .lp-footer { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
   }
 `
@@ -95,6 +90,14 @@ export default function LandingPage() {
   const fundCount = funds?.length ?? null
   const categoryCount = funds ? new Set(funds.map(f => f.g)).size : null
   const indexCount = idxList.length || null
+
+  // Top fund categories by real scheme count — feeds the bento screener cell.
+  const topCats = (() => {
+    if (!funds) return []
+    const counts = new Map<string, number>()
+    for (const f of funds) counts.set(f.g, (counts.get(f.g) ?? 0) + 1)
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+  })()
 
   const STATS: { value: number | null; label: string }[] = [
     { value: fundCount, label: 'Mutual funds tracked' },
@@ -267,12 +270,7 @@ export default function LandingPage() {
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ position: 'relative', width: 9, height: 9, borderRadius: '50%', background: ACCENT, display: 'inline-block' }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: ACCENT, animation: 'lpPing 2.4s ease-out infinite' }} />
-            </span>
-            <span style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em' }}>stonks</span>
-          </div>
+          <Logo size={30} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div className="lp-navlinks" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {[['Funds', '/funds'], ['Indices', '/indices'], ['Compare', '/compare']].map(([lbl, path]) => (
@@ -289,32 +287,45 @@ export default function LandingPage() {
       <section style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
         <canvas ref={particleRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }} />
 
+        {/* Vertical source rail — editorial spine, hidden on mobile */}
+        <div className="lp-navlinks" style={{ position: 'absolute', left: 26, top: 170, bottom: 90, zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+          <span style={{ width: 1, flex: 1, background: 'linear-gradient(180deg, transparent, var(--border-strong))' }} />
+          <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.34em', color: 'var(--subtle)', writingMode: 'vertical-rl' }}>
+            NSE · AMFI · MFAPI — KEYLESS FEEDS
+          </span>
+          <span style={{ width: 1, flex: 1, background: 'linear-gradient(180deg, var(--border-strong), transparent)' }} />
+        </div>
+
         <div className="lp-hero" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '150px 24px 90px', display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 56, alignItems: 'center' }}>
           {/* Copy */}
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '7px 14px', border: '1px solid var(--border)', borderRadius: 999, background: 'var(--muted)', marginBottom: 28, animation: 'lpRise 0.6s ease-out both' }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} />
-              <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.14em', color: 'var(--muted-foreground)' }}>NSE · BSE · REAL-TIME RESEARCH</span>
+            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 14, marginBottom: 30, animation: 'lpRise 0.6s ease-out both' }}>
+              <span style={{ fontFamily: MONO, fontSize: 13, color: ACCENT }}>01</span>
+              <span style={{ width: 34, height: 1, background: 'var(--border-strong)', alignSelf: 'center' }} />
+              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 500, letterSpacing: '0.2em', color: 'var(--muted-foreground)' }}>INDIAN MARKETS RESEARCH TERMINAL</span>
             </div>
-            <h1 style={{ fontFamily: DISPLAY, fontSize: 'clamp(42px,5.6vw,74px)', lineHeight: 1.02, fontWeight: 700, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
-              <span style={{ display: 'block', color: 'var(--foreground)', animation: 'lpRise 0.7s ease-out 0.05s both' }}>Screen Indian</span>
-              <span style={{ display: 'inline-block', animation: 'lpRise 0.7s ease-out 0.12s both' }}>
+            <h1 style={{ fontFamily: DISPLAY, fontSize: 'clamp(44px,6vw,82px)', lineHeight: 0.98, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 26px' }}>
+              <span style={{ display: 'block', color: 'var(--foreground)', animation: 'lpRise 0.7s ease-out 0.05s both' }}>Read the tape.</span>
+              <span style={{ display: 'block', fontStyle: 'italic', animation: 'lpRise 0.7s ease-out 0.14s both' }}>
+                <span style={{ color: 'var(--muted-foreground)' }}>Screen </span>
                 <span ref={cycleRef} style={{ color: ACCENT }}>funds</span>
-                <span style={{ display: 'inline-block', width: 4, height: '0.82em', background: ACCENT, marginLeft: 6, verticalAlign: 'baseline', transform: 'translateY(0.08em)', animation: 'lpBlink 1.1s step-end infinite' }} />
+                <span style={{ display: 'inline-block', width: 4, height: '0.78em', background: ACCENT, marginLeft: 7, verticalAlign: 'baseline', transform: 'translateY(0.08em)', animation: 'lpBlink 1.1s step-end infinite' }} />
               </span>
             </h1>
-            <p style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 480, margin: '0 0 36px', animation: 'lpRise 0.7s ease-out 0.2s both' }}>
-              A blazing-fast screener for India's mutual funds, every NSE &amp; BSE index, and live equities — built for people who read the numbers, not the noise.
+            <p style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 470, margin: '0 0 36px', animation: 'lpRise 0.7s ease-out 0.2s both' }}>
+              14,000+ mutual funds, nine NSE benchmarks and live equities on one dark,
+              data-dense terminal. Every number traces to a real source — nothing on
+              screen is mocked, padded or invented.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 40, animation: 'lpRise 0.7s ease-out 0.28s both' }}>
-              <button data-magnetic className="lp-btn-pri" onClick={() => navigate('/funds')} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '15px 28px', borderRadius: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 9, transition: 'transform 0.18s ease-out, background 0.2s' }}>
-                Start screening
+              <button data-magnetic className="lp-btn-pri" onClick={() => navigate('/funds')} style={{ fontFamily: MONO, fontSize: 15, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '15px 28px', borderRadius: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10, transition: 'transform 0.18s ease-out, background 0.2s' }}>
+                $ start screening
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </button>
               <button data-magnetic className="lp-btn-out" onClick={() => navigate('/indices')} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: 'var(--foreground)', background: 'var(--card)', border: '1px solid var(--border)', padding: '15px 26px', borderRadius: 12, cursor: 'pointer', transition: 'border-color 0.2s, background 0.2s' }}>View live indices</button>
             </div>
             <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap', animation: 'lpRise 0.7s ease-out 0.36s both' }}>
-              {['Real-time NSE + BSE', 'Thousands of funds indexed', 'Free forever'].map(t => (
+              {['Keyless NSE + AMFI feeds', '14,000+ funds indexed', 'Free forever'].map(t => (
                 <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, color: 'var(--muted-foreground)', fontSize: 13.5, fontWeight: 500 }}>
                   <span style={{ color: ACCENT }}>✓</span> {t}
                 </div>
@@ -391,24 +402,76 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────────────────── */}
+      {/* ── Features — bento grid, every cell fed by real data ───────────── */}
       <section id="features" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '40px 24px 90px' }}>
-        <div data-reveal style={{ maxWidth: 620, margin: '0 auto 56px', textAlign: 'center', opacity: 0, transform: 'translateY(28px)' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: ACCENT, marginBottom: 14 }}>EVERYTHING IN ONE TERMINAL</div>
-          <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(30px,4vw,46px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.08, margin: '0 0 16px' }}>Research that keeps up with the tape</h2>
-          <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--muted-foreground)', margin: 0 }}>Screen, track, and compare across the entire Indian market without juggling five tabs.</p>
+        <div data-reveal style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 40, opacity: 0, transform: 'translateY(28px)' }}>
+          <span style={{ fontFamily: MONO, fontSize: 13, color: ACCENT }}>02</span>
+          <span style={{ width: 34, height: 1, background: 'var(--border-strong)', alignSelf: 'center' }} />
+          <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(30px,4vw,46px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.08, margin: 0 }}>
+            Research that keeps up <span style={{ fontStyle: 'italic', color: 'var(--muted-foreground)' }}>with the tape</span>
+          </h2>
         </div>
-        <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
-          {FEATURES.map(f => (
-            <div key={f.key} data-reveal data-reveal-delay={f.delay} style={{ opacity: 0, transform: 'translateY(32px)' }}>
-              <div className="lp-feat" style={{ height: '100%', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 26, transition: 'border-color 0.2s' }}>
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--primary-subtle)', border: '1px solid var(--risk-low-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ACCENT, marginBottom: 20 }}
-                  dangerouslySetInnerHTML={{ __html: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON_SVG[f.key]}</svg>` }} />
-                <h3 style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em', margin: '0 0 10px' }}>{f.title}</h3>
-                <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--muted-foreground)', margin: 0 }}>{f.desc}</p>
-              </div>
+
+        <div className="lp-bento" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'auto auto', gap: 18 }}>
+          {/* Screener — large cell with live category chips */}
+          <div data-reveal className="lp-feat" style={{ gridColumn: 'span 2', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: 30, opacity: 0, transform: 'translateY(32px)', transition: 'border-color 0.2s', cursor: 'pointer' }} onClick={() => navigate('/funds')}>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.22em', color: ACCENT, marginBottom: 14 }}>FUND SCREENER</div>
+            <h3 style={{ fontFamily: DISPLAY, fontSize: 30, fontWeight: 600, margin: '0 0 10px' }}>
+              {fundCount ? fundCount.toLocaleString('en-IN') : '14,000+'} funds. One filter bar.
+            </h3>
+            <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--muted-foreground)', margin: '0 0 22px', maxWidth: 520 }}>
+              The full AMFI-active universe, searchable live and filterable by risk tier,
+              category and fund house. Dead and defunct schemes are pruned automatically.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {topCats.length > 0 ? topCats.map(([cat, n]) => (
+                <span key={cat} style={{ fontFamily: MONO, fontSize: 12, color: 'var(--muted-foreground)', border: '1px solid var(--border)', background: 'var(--muted)', borderRadius: 999, padding: '6px 12px' }}>
+                  {cat} <span style={{ color: ACCENT }}>{n.toLocaleString('en-IN')}</span>
+                </span>
+              )) : (
+                <span style={{ fontFamily: MONO, fontSize: 12, color: 'var(--subtle)' }}>loading live universe…</span>
+              )}
             </div>
-          ))}
+          </div>
+
+          {/* Banker — tall cell */}
+          <div data-reveal data-reveal-delay={80} className="lp-feat" style={{ gridRow: 'span 2', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: 30, display: 'flex', flexDirection: 'column', opacity: 0, transform: 'translateY(32px)', transition: 'border-color 0.2s', cursor: 'pointer' }} onClick={() => navigate('/banker')}>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.22em', color: ACCENT, marginBottom: 14 }}>THE BANKER</div>
+            <h3 style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 600, margin: '0 0 10px' }}>A Buffett-principles shortlist</h3>
+            <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--muted-foreground)', margin: '0 0 22px' }}>
+              Answer a real risk questionnaire; get funds scored on drawdown, consistency
+              and track record. Fully algorithmic, fully client-side.
+            </p>
+            <blockquote style={{ margin: 'auto 0 0', padding: '16px 18px', borderLeft: `2px solid ${ACCENT}`, background: 'var(--muted)', borderRadius: '0 12px 12px 0' }}>
+              <p style={{ fontFamily: DISPLAY, fontStyle: 'italic', fontSize: 16, lineHeight: 1.5, color: 'var(--foreground)', margin: 0 }}>
+                "Price is what you pay. Value is what you get."
+              </p>
+              <footer style={{ fontFamily: MONO, fontSize: 11, color: 'var(--subtle)', marginTop: 8 }}>— Warren Buffett</footer>
+            </blockquote>
+          </div>
+
+          {/* Risk math cell */}
+          <div data-reveal data-reveal-delay={140} className="lp-feat" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: 26, opacity: 0, transform: 'translateY(32px)', transition: 'border-color 0.2s' }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.22em', color: ACCENT, marginBottom: 12 }}>REAL RISK MATH</div>
+            <p style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--muted-foreground)', margin: '0 0 16px' }}>
+              Computed from full NAV history on every fund — unit-tested, never estimated.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {RISK_METRICS.map(m => (
+                <span key={m} style={{ fontFamily: MONO, fontSize: 11, color: 'var(--muted-foreground)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px' }}>{m}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Privacy cell */}
+          <div data-reveal data-reveal-delay={200} className="lp-feat" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: 26, opacity: 0, transform: 'translateY(32px)', transition: 'border-color 0.2s' }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.22em', color: ACCENT, marginBottom: 12 }}>PRIVATE BY DESIGN</div>
+            <h3 style={{ fontFamily: DISPLAY, fontSize: 21, fontWeight: 600, margin: '0 0 8px' }}>Your portfolio never leaves the browser</h3>
+            <p style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--muted-foreground)', margin: 0 }}>
+              Watchlist and holdings live in localStorage. No account, no server, no
+              analytics on your money.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -416,8 +479,14 @@ export default function LandingPage() {
       <section id="indices" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '20px 24px 100px' }}>
         <div data-reveal style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 36, flexWrap: 'wrap', gap: 16, opacity: 0, transform: 'translateY(28px)' }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', color: ACCENT, marginBottom: 12 }}>MARKET PULSE</div>
-            <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(28px,3.6vw,42px)', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Every index, drawn live</h2>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 12 }}>
+              <span style={{ fontFamily: MONO, fontSize: 13, color: ACCENT }}>03</span>
+              <span style={{ width: 34, height: 1, background: 'var(--border-strong)', alignSelf: 'center' }} />
+              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 500, letterSpacing: '0.2em', color: 'var(--muted-foreground)' }}>MARKET PULSE</span>
+            </div>
+            <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(28px,3.6vw,42px)', fontWeight: 600, letterSpacing: '-0.03em', margin: 0 }}>
+              Nine benchmarks, <span style={{ fontStyle: 'italic', color: 'var(--muted-foreground)' }}>drawn live</span>
+            </h2>
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--muted-foreground)', fontSize: 13, fontFamily: MONO }}>
             {/* Honest provenance label — never claims "live" over snapshot data. */}
@@ -448,11 +517,16 @@ export default function LandingPage() {
       <section id="cta" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '20px 24px 110px' }}>
         <div data-reveal style={{ position: 'relative', overflow: 'hidden', textAlign: 'center', border: '1px solid var(--border)', borderRadius: 24, padding: '80px 32px', background: 'var(--card)', opacity: 0, transform: 'translateY(28px)' }}>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(32px,4.6vw,56px)', fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.05, margin: '0 0 18px' }}>Start screening in seconds.</h2>
-            <p style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 480, margin: '0 auto 36px' }}>No signup, no paywall. Open the terminal and read the market the way the pros do.</p>
-            <button data-magnetic className="lp-cta-btn" onClick={() => navigate('/funds')} style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '17px 36px', borderRadius: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10, transition: 'transform 0.18s ease-out, background 0.2s' }}>
-              Launch the terminal
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}>
+              <LogoMark size={52} />
+            </div>
+            <h2 style={{ fontFamily: DISPLAY, fontSize: 'clamp(32px,4.6vw,56px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1.05, margin: '0 0 18px' }}>
+              Start screening <span style={{ fontStyle: 'italic' }}>in seconds.</span>
+            </h2>
+            <p style={{ fontSize: 18, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 480, margin: '0 auto 36px' }}>No signup, no paywall, no API keys. Open the terminal and read the market the way the pros do.</p>
+            <button data-magnetic className="lp-cta-btn" onClick={() => navigate('/funds')} style={{ fontFamily: MONO, fontSize: 16, fontWeight: 600, color: 'var(--primary-foreground)', background: ACCENT, border: 'none', padding: '17px 36px', borderRadius: 14, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10, transition: 'transform 0.18s ease-out, background 0.2s' }}>
+              $ launch terminal
+              <span style={{ display: 'inline-block', width: 9, height: '1em', background: 'var(--primary-foreground)', animation: 'lpBlink 1.1s step-end infinite' }} />
             </button>
           </div>
         </div>
@@ -462,32 +536,31 @@ export default function LandingPage() {
       <footer id="footer-about" style={{ position: 'relative', zIndex: 1, borderTop: '1px solid var(--border)', padding: '56px 24px 40px' }}>
         <div className="lp-footer" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 32 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: ACCENT }} />
-              <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>stonks</span>
+            <div style={{ marginBottom: 14 }}>
+              <Logo size={26} />
             </div>
             <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--muted-foreground)', maxWidth: 280, margin: 0 }}>The fastest way to screen Indian mutual funds, indices and equities. Built for serious retail research.</p>
           </div>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>PRODUCT</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-              {[['Fund Screener','/funds'],['Live Indices','/indices'],['Compare Engine','/compare']].map(([lbl, path]) => (
+              {[['Fund Screener','/funds'],['Live Indices','/indices'],['Compare','/compare'],['The Banker','/banker']].map(([lbl, path]) => (
                 <button key={lbl} onClick={() => navigate(path)} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--muted-foreground)', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
               ))}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>COMPANY</div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>APP</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-              {['About','Methodology','Changelog'].map(lbl => (
-                <button key={lbl} onClick={() => scrollTo('cta')} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--muted-foreground)', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
+              {[['About','/about'],['Watchlist','/watchlist'],['Portfolio','/portfolio']].map(([lbl, path]) => (
+                <button key={lbl} onClick={() => navigate(path)} className="lp-foot-link" style={{ fontFamily: SANS, background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--muted-foreground)', cursor: 'pointer', textAlign: 'left', transition: 'color 0.15s' }}>{lbl}</button>
               ))}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--subtle)', marginBottom: 14 }}>DATA</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-              {['NSE · BSE','EOD & Intraday','MFAPI + AMFI'].map(t => (
+              {['NSE indices & quotes', 'NSE EOD bhavcopy', 'MFAPI + AMFI'].map(t => (
                 <span key={t} style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>{t}</span>
               ))}
             </div>

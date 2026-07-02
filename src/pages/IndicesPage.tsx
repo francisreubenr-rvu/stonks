@@ -48,7 +48,7 @@ export default function IndicesPage() {
         </div>
       )}
       <div data-reveal>
-        <SectionEyebrow eyebrow="Market Pulse" title="Every index, drawn live" />
+        <SectionEyebrow eyebrow="Market Pulse" title="Nine benchmarks, drawn live" />
       </div>
       <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {indices.map((idx) => {

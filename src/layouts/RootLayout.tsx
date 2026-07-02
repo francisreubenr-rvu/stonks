@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { SearchBar } from '@/components/SearchBar'
 import { PageSkeleton } from '@/components/PageSkeleton'
+import { Logo } from '@/components/Logo'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', end: false },
@@ -20,18 +21,8 @@ export default function RootLayout() {
     <div className="min-h-dvh bg-background flex flex-col">
       <header className="sticky top-0 z-10 bg-[var(--color-card)] border-b border-border">
         <div className="max-w-[1200px] mx-auto px-6 flex items-center h-12 gap-3">
-          <NavLink to="/dashboard" className="flex items-center gap-1.5 pr-4 shrink-0 border-r border-border">
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ background: 'var(--primary)', boxShadow: 'var(--glow-positive)' }}
-              aria-hidden="true"
-            />
-            <span
-              className="text-[15px] font-semibold text-foreground select-none"
-              style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', letterSpacing: '0.01em' }}
-            >
-              stonks
-            </span>
+          <NavLink to="/dashboard" className="flex items-center pr-4 shrink-0 border-r border-border">
+            <Logo size={24} />
           </NavLink>
           <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto">
             {NAV.map(({ to, label, end }) => (
