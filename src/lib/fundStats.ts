@@ -64,8 +64,9 @@ export function computeYearlyReturns(data: NavPoint[]): { year: number; return: 
   return results
 }
 
-export function computeStats(data: NavPoint[]): FundStats {
+export function computeStats(data: NavPoint[]): FundStats | null {
   const n = data.length
+  if (n === 0) return null
   const currentNav = data[n - 1].nav
   const inceptionNav = data[0].nav
 

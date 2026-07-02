@@ -4,6 +4,7 @@ import { useCompareSet } from '@/hooks/useCompareSet'
 import { useSxEffects } from '@/hooks/useSxEffects'
 import { Input } from '@/components/ui/input'
 import { SectionEyebrow } from '@/components/SectionEyebrow'
+import { WatchlistToggle } from '@/components/WatchlistToggle'
 
 const DEFAULT = ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK']
 
@@ -83,19 +84,27 @@ export default function ComparePage() {
               </th>
               {symbols.map(sym => (
                 <th key={sym} className="text-right px-3 py-2.5 min-w-28">
-                  <button
-                    onClick={() => navigate(`/symbol/${sym}`)}
-                    className="font-mono text-[11px] font-semibold text-primary hover:underline cursor-pointer"
-                  >
-                    {sym}
-                  </button>
-                  <button
-                    onClick={() => removeSymbol(sym)}
-                    className="ml-1.5 text-[10px] text-muted-foreground hover:text-destructive cursor-pointer"
-                    title="Remove"
-                  >
-                    ✕
-                  </button>
+                  <div className="inline-flex items-center gap-1.5">
+                    <WatchlistToggle
+                      symbol={sym}
+                      name={quotes?.find(q => q.symbol === sym)?.name ?? sym}
+                      type="stock"
+                      className="h-5 w-5"
+                    />
+                    <button
+                      onClick={() => navigate(`/symbol/${sym}`)}
+                      className="font-mono text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                    >
+                      {sym}
+                    </button>
+                    <button
+                      onClick={() => removeSymbol(sym)}
+                      className="text-[10px] text-muted-foreground hover:text-destructive cursor-pointer"
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </th>
               ))}
             </tr>

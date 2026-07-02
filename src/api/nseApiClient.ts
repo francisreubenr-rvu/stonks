@@ -102,7 +102,7 @@ export async function fetchQuote(symbol: string): Promise<Quote> {
   const data = await get<NseQuoteResponse>('/quote-equity', { symbol: s })
   const p = data.priceInfo
   if (!p || !isFinite(p.lastPrice)) throw new Error(`Symbol not found: ${s}`)
-  const pe = Number(data.metadata?.pdSymbolPe ?? 0)
+  const pe = Number(data.metadata?.pdSymbolPe ?? NaN)
   return {
     symbol: s,
     name: data.info?.companyName ?? s,
@@ -110,17 +110,28 @@ export async function fetchQuote(symbol: string): Promise<Quote> {
     change: p.change,
     changePct: p.pChange,
     volume: data.preOpenMarket?.totalTradedVolume ?? 0,
-    marketCap: 0,
-    pe: isFinite(pe) ? pe : 0,
+    // Not exposed by NSE's quote-equity response — never fabricate a 0.
+    marketCap: null,
+    pe: isFinite(pe) ? pe : null,
     exchange: 'NSE',
   }
 }
 
+// /quote-equity is the Akamai-protected endpoint most prone to blocking —
+// firing a whole portfolio's worth of requests simultaneously practically
+// invites the 429/403 it then has to fall back from. Batch it.
+const QUOTE_BATCH_SIZE = 4
+
 export async function fetchMultipleQuotes(symbols: string[]): Promise<Quote[]> {
-  const settled = await Promise.allSettled(symbols.map(s => fetchQuote(s)))
-  return settled
-    .filter((r): r is PromiseFulfilledResult<Quote> => r.status === 'fulfilled')
-    .map(r => r.value)
+  const out: Quote[] = []
+  for (let i = 0; i < symbols.length; i += QUOTE_BATCH_SIZE) {
+    const batch = symbols.slice(i, i + QUOTE_BATCH_SIZE)
+    const settled = await Promise.allSettled(batch.map(s => fetchQuote(s)))
+    for (const r of settled) {
+      if (r.status === 'fulfilled') out.push(r.value)
+    }
+  }
+  return out
 }
 
 // ── Fundamentals (best-effort — NSE exposes a subset) ────────────────────────
@@ -130,16 +141,18 @@ export async function fetchFundamentals(symbol: string): Promise<Fundamentals | 
     const s = bareSymbol(symbol)
     const data = await get<NseQuoteResponse>('/quote-equity', { symbol: s })
     if (!data.priceInfo) return null
-    const pe = Number(data.metadata?.pdSymbolPe ?? 0)
+    const pe = Number(data.metadata?.pdSymbolPe ?? NaN)
     return {
       symbol: s,
-      pe: isFinite(pe) ? pe : 0,
-      pb: 0,
-      eps: 0,
-      roe: 0,
-      debtToEquity: 0,
-      dividendYield: 0,
-      marketCap: 0,
+      pe: isFinite(pe) ? pe : null,
+      // NSE's quote-equity response does not carry P/B, EPS, ROE, D/E, or
+      // dividend yield — leave them unset rather than rendering a fake 0.
+      pb: null,
+      eps: null,
+      roe: null,
+      debtToEquity: null,
+      dividendYield: null,
+      marketCap: null,
       sector: data.industryInfo?.sector ?? 'N/A',
       industry: data.industryInfo?.industry ?? data.industryInfo?.basicIndustry ?? 'N/A',
     }

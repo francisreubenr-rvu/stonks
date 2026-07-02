@@ -14,38 +14,56 @@ export interface LightFund {
 
 export const RISK_LABELS = ['Low', 'Moderate', 'High', 'Very High'] as const
 
-// Category extraction patterns
+// Category extraction patterns. Order matters: cat() returns on first match,
+// so any name-string keyword that overlaps a dedicated category below must be
+// checked BEFORE the broader composite pattern that also mentions it — e.g.
+// "Banking and PSU Fund" and "Dividend Yield Fund" must resolve to their own
+// (very different risk tier) category rather than falling into the generic
+// "Sectoral/Thematic" bucket just because it lists "Banking"/"Dividend Yield"
+// as a keyword too. Getting this wrong silently misclassifies a low-risk debt
+// fund as a high-risk sectoral equity fund.
 const CAT_PATTERNS: Array<[RegExp, string]> = [
   [/Large\s*Cap/i, 'Large Cap'], [/Mid\s*Cap/i, 'Mid Cap'], [/Small\s*Cap/i, 'Small Cap'],
   [/Flexi\s*Cap/i, 'Flexi Cap'], [/Multi\s*Cap/i, 'Multi Cap'],
   [/Large\s*&?\s*Mid/i, 'Large & Mid'], [/ELSS/i, 'ELSS'],
   [/Index\s*Fund/i, 'Index Fund'], [/ETF/i, 'ETF'],
-  [/Sectoral|Thematic|Technology|Pharma|Infrastructure|Banking|Energy|Consumption|MNC|Dividend Yield/i, 'Sectoral/Thematic'],
+  // Specific compound categories that would otherwise be shadowed by the
+  // generic Sectoral/Thematic composite pattern below.
+  [/Banking\s*and\s*PSU/i, 'Banking and PSU'],
+  [/Dividend\s*Yield/i, 'Dividend Yield'],
+  [/Sectoral|Thematic|Technology|Pharma|Infrastructure|Banking|Energy|Consumption|MNC/i, 'Sectoral/Thematic'],
   [/International|Global|\bU\.?S\.?\b|Nasdaq|S&P/i, 'International'],
   [/Liquid/i, 'Liquid'], [/Overnight/i, 'Overnight'], [/Ultra\s*Short/i, 'Ultra Short'],
   [/Money\s*Market/i, 'Money Market'], [/Low\s*Duration/i, 'Low Duration'],
   [/Short\s*Duration/i, 'Short Duration'], [/Corporate\s*Bond/i, 'Corporate Bond'],
   [/Gilt/i, 'Gilt'], [/Credit\s*Risk/i, 'Credit Risk'],
-  [/Floater/i, 'Floater'], [/Banking\s*and\s*PSU/i, 'Banking and PSU'],
+  [/Floater/i, 'Floater'],
   [/Medium\s*Duration/i, 'Medium Duration'], [/Long\s*Duration/i, 'Long Duration'],
   [/Dynamic\s*Bond/i, 'Dynamic Bond'], [/Conservative\s*Hybrid/i, 'Conservative Hybrid'],
   [/Aggressive\s*Hybrid/i, 'Aggressive Hybrid'], [/Equity\s*Savings/i, 'Equity Savings'],
   [/Balanced\s*Hybrid/i, 'Balanced Hybrid'], [/Multi\s*Asset/i, 'Multi Asset'],
   [/Arbitrage/i, 'Arbitrage'], [/Contra/i, 'Contra'],
-  [/Value/i, 'Value'], [/Dividend\s*Yield/i, 'Dividend Yield'],
+  [/Value/i, 'Value'],
   [/Focused/i, 'Focused'], [/FOF|Fund\s*of\s*Fund/i, 'FoF'],
 ]
 
-function cat(fundName: string): string {
+export function cat(fundName: string): string {
   for (const [p, l] of CAT_PATTERNS) { if (p.test(fundName)) return l }
   return 'Other'
 }
 
-function risk(category: string): number {
+export function risk(category: string): number {
   const c = category.toLowerCase()
   if (/liquid|overnight|money market|ultra short|low duration/.test(c)) return 0
-  if (/short|floater|banking|corp|gilt|debt|credit|medium|arb|conserv/i.test(c)) return 1
-  if (/large|multi|flexi|large & mid|balanced|index|etf|focus|value|dividend|dyn/i.test(c)) return 1
+  // Debt, hybrids and arbitrage: genuinely low-to-moderate volatility.
+  // "Multi Asset" must be checked before the broad /multi/ equity pattern
+  // below, or hybrid multi-asset funds get tiered as pure equity.
+  if (/short|floater|banking|corp|gilt|debt|credit|medium|arb|conserv|balanced|dyn|multi asset/i.test(c)) return 1
+  // Broad-market EQUITY (large/multi/flexi cap, index, ETF, focused, value,
+  // dividend yield) is High risk, not Moderate — lumping it with debt at
+  // tier 1 let the Banker's "Capital Preservation / Debt-heavy" profile
+  // recommend equity funds. SEBI riskometers mark these Very High.
+  if (/large|multi|flexi|large & mid|index|etf|focus|value|dividend/i.test(c)) return 2
   if (/mid cap|contra/i.test(c)) return 2
   if (/small|sector|thematic|elss|infra|international|fof|aggr/i.test(c)) return 3
   return 1

@@ -14,10 +14,10 @@ async function getCached(code: number): Promise<FundStats | null> {
   return cacheGet<FundStats>(cacheKey(['fstat', String(code)]))
 }
 
-async function fetchAndCache(code: number): Promise<FundStats> {
+async function fetchAndCache(code: number): Promise<FundStats | null> {
   const detail = await fetchFundDetail(String(code))
   const stats = computeStats(detail.data)
-  cacheSet(cacheKey(['fstat', String(code)]), stats, STATS_TTL)
+  if (stats) cacheSet(cacheKey(['fstat', String(code)]), stats, STATS_TTL)
   return stats
 }
 
@@ -43,9 +43,16 @@ export function useBanker(
   const versionRef = useRef(0)
   const investProfileRef = useRef(investProfile)
   investProfileRef.current = investProfile
+  // Read the fund list via a ref so scan()'s identity — and therefore the
+  // trigger effect below — doesn't churn every time React Query hands back a
+  // fresh array reference for the same data. A background refetch used to
+  // restart a full scan mid-flight, discarding in-progress batch fetches.
+  const schemesRef = useRef(schemes)
+  schemesRef.current = schemes
 
   const scan = useCallback(() => {
-    if (schemes.length === 0) return
+    const allSchemes = schemesRef.current
+    if (allSchemes.length === 0) return
     const profileInputs = investProfileRef.current
     scanningRef.current = true
     setIsScanning(true)
@@ -54,7 +61,7 @@ export function useBanker(
     versionRef.current += 1
     const version = versionRef.current
 
-    const eligible = filterByProfile(schemes, profile)
+    const eligible = filterByProfile(allSchemes, profile)
     const byCategory = new Map<string, LightFund[]>()
     for (const s of eligible) {
       const list = byCategory.get(s.g) || []
@@ -65,11 +72,38 @@ export function useBanker(
     const cats = Array.from(byCategory.keys()).sort((a, b) =>
       (byCategory.get(b)?.length ?? 0) - (byCategory.get(a)?.length ?? 0))
 
-    const final: LightFund[] = []
+    // Deterministic pre-selection, two passes:
+    //  1) breadth — the best fund (by stats-free Buffett pre-score) from each
+    //     category, so the shortlist spans styles;
+    //  2) backfill — if eligible categories < scanCount, top up with the
+    //     next-best remaining funds across ALL categories by pre-score, so a
+    //     strong category's 2nd-best can still make the cut and the scan
+    //     never silently returns fewer candidates than requested.
+    // No randomness — same inputs must yield the same shortlist.
+    const preScore = (f: LightFund) => buffettScore(f, null, profileInputs).score
+    const rankedByCategory = new Map<string, LightFund[]>()
     for (const cat of cats) {
-      const funds = byCategory.get(cat) ?? []
-      final.push(funds[Math.floor(Math.random() * Math.min(3, funds.length))])
+      rankedByCategory.set(cat, [...(byCategory.get(cat) ?? [])].sort((a, b) => preScore(b) - preScore(a)))
+    }
+
+    const final: LightFund[] = []
+    const taken = new Set<number>()
+    for (const cat of cats) {
+      const best = rankedByCategory.get(cat)?.[0]
+      if (!best) continue
+      final.push(best)
+      taken.add(best.c)
       if (final.length >= scanCount) break
+    }
+
+    if (final.length < scanCount) {
+      const rest = eligible
+        .filter(f => !taken.has(f.c))
+        .sort((a, b) => preScore(b) - preScore(a))
+      for (const f of rest) {
+        final.push(f)
+        if (final.length >= scanCount) break
+      }
     }
 
     // Show baseline immediately
@@ -127,7 +161,7 @@ export function useBanker(
 
         const fetched = new Map<number, FundStats>()
         results.forEach((r, j) => {
-          if (r.status === 'fulfilled') fetched.set(batch[j], r.value)
+          if (r.status === 'fulfilled' && r.value) fetched.set(batch[j], r.value)
         })
 
         if (fetched.size > 0) {
@@ -142,7 +176,9 @@ export function useBanker(
           }))
         }
 
-        setProgress(Math.round(15 + (i / needFetch.length) * 85))
+        // Count the batch just completed (i + batch.length), not its start
+        // index, so the bar doesn't lag a full batch behind reality.
+        setProgress(Math.round(15 + ((i + batch.length) / needFetch.length) * 85))
       }
 
       if (version !== versionRef.current) return
@@ -150,8 +186,11 @@ export function useBanker(
       setProgress(100)
       scanningRef.current = false
     })()
-  }, [schemes, profile, scanCount])
+  }, [profile, scanCount])
 
+  // Keyed on schemes.length (a stable primitive), not the array reference —
+  // scans restart only when the fund universe actually changes size, the
+  // profile/scan settings change, or the user explicitly rescans.
   useEffect(() => {
     if (!enabled || schemes.length === 0) return
     scanningRef.current = false
@@ -159,7 +198,8 @@ export function useBanker(
     setCandidates([])
     setProgress(0)
     scan()
-  }, [enabled, schemes, profile, scanCount, rescanKey, scan])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, schemes.length, profile, scanCount, rescanKey, scan])
 
   return {
     candidates: candidates.slice(0, scanCount).sort((a, b) => b.score - a.score),

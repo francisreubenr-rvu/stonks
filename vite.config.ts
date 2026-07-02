@@ -33,6 +33,12 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  test: {
+    // This project lives on an exFAT/SMB drive that shadows every file with
+    // a macOS AppleDouble "._name" resource-fork twin — exclude them so
+    // vitest doesn't try to parse binary metadata as source.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/._*'],
+  },
   server: {
     proxy: {
       '/api/nse': {

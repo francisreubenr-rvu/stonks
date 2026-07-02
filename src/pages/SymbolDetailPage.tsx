@@ -1,12 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSymbolDetail } from '@/hooks/useSymbolDetail'
 import { useSxEffects } from '@/hooks/useSxEffects'
+import { WatchlistToggle } from '@/components/WatchlistToggle'
 
-function StatRow({ label, value }: { label: string; value: string }) {
+function StatRow({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
       <span className="text-[13px] text-muted-foreground">{label}</span>
-      <span className="text-[13px] font-medium text-foreground font-mono tabular-nums">{value}</span>
+      <span className="text-[13px] font-medium text-foreground font-mono tabular-nums">{value ?? '—'}</span>
     </div>
   )
 }
@@ -83,6 +84,7 @@ export default function SymbolDetailPage() {
           <span className="font-mono text-[11px] font-medium text-muted-foreground border border-border px-2 py-0.5 rounded bg-muted">
             {quote.exchange}
           </span>
+          <WatchlistToggle symbol={quote.symbol} name={quote.name} type="stock" className="ml-auto" />
         </div>
         <p className="text-[13px] text-muted-foreground">{quote.name}</p>
         <div className="flex items-center gap-3 pt-2 flex-wrap">
@@ -162,12 +164,12 @@ export default function SymbolDetailPage() {
             </p>
           </div>
           <div className="px-6">
-            <StatRow label="P/E"           value={fundamentals.pe.toFixed(1)} />
-            <StatRow label="P/B"           value={fundamentals.pb.toFixed(2)} />
-            <StatRow label="EPS"           value={`₹${fundamentals.eps.toFixed(2)}`} />
-            <StatRow label="ROE"           value={`${fundamentals.roe.toFixed(1)}%`} />
-            <StatRow label="Debt / Equity" value={`${fundamentals.debtToEquity.toFixed(2)}×`} />
-            <StatRow label="Div. Yield"    value={`${fundamentals.dividendYield.toFixed(2)}%`} />
+            <StatRow label="P/E"           value={fundamentals.pe !== null ? fundamentals.pe.toFixed(1) : null} />
+            <StatRow label="P/B"           value={fundamentals.pb !== null ? fundamentals.pb.toFixed(2) : null} />
+            <StatRow label="EPS"           value={fundamentals.eps !== null ? `₹${fundamentals.eps.toFixed(2)}` : null} />
+            <StatRow label="ROE"           value={fundamentals.roe !== null ? `${fundamentals.roe.toFixed(1)}%` : null} />
+            <StatRow label="Debt / Equity" value={fundamentals.debtToEquity !== null ? `${fundamentals.debtToEquity.toFixed(2)}×` : null} />
+            <StatRow label="Div. Yield"    value={fundamentals.dividendYield !== null ? `${fundamentals.dividendYield.toFixed(2)}%` : null} />
             <StatRow label="Sector"        value={fundamentals.sector} />
             <StatRow label="Industry"      value={fundamentals.industry} />
           </div>

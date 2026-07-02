@@ -4,8 +4,6 @@ export interface FundFilters {
   categories: string[]
   riskLevels: string[]
   fundHouse: string
-  minReturns1y: number
-  minAum: number
 }
 
 interface Props {
@@ -25,7 +23,7 @@ export function ScreenerFilters({ categories, fundHouses, onChange }: Props) {
     h: string = house,
   ) {
     setCats(c); setRisks(r); setHouse(h)
-    onChange({ categories: c, riskLevels: r, fundHouse: h, minReturns1y: 0, minAum: 0 })
+    onChange({ categories: c, riskLevels: r, fundHouse: h })
   }
 
   const toggle = (list: string[], item: string, setter: (v: string[]) => void) => {

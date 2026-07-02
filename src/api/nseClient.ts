@@ -38,16 +38,19 @@ export async function fetchIndices(): Promise<IndexQuote[]> {
     const rows = await fetchAllIndicesRaw()
     const byName = new Map(rows.map(r => [r.indexSymbol, r]))
 
-    const mapped: IndexQuote[] = INDICES.map(({ nse, name }) => {
+    // Only keep indices NSE actually resolved this call. A partial response
+    // (common — individual gauges drop in/out) must not backfill the missing
+    // ones with fabricated zeros sitting next to real values.
+    const mapped: IndexQuote[] = INDICES.flatMap(({ nse, name }) => {
       const r = byName.get(nse)
-      if (!r || !isFinite(r.last) || r.last === 0) {
-        return { symbol: nse, name, value: 0, change: 0, changePct: 0 }
-      }
-      return { symbol: nse, name, value: r.last, change: r.variation, changePct: r.percentChange }
+      if (!r || !isFinite(r.last) || r.last === 0) return []
+      return [{ symbol: nse, name, value: r.last, change: r.variation, changePct: r.percentChange }]
     })
 
-    // If NSE returned real data for at least one index, use it
-    if (mapped.some(i => i.value > 0)) return mapped
+    // Only trust the live response if it covers every index we track —
+    // otherwise prefer the complete, real fallback snapshot over a mix of
+    // live + silently-missing gauges.
+    if (mapped.length === INDICES.length) return mapped
   } catch {
     // fall through to static fallback
   }

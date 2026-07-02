@@ -83,7 +83,9 @@ export default function BankerPage() {
 
   const { title, desc } = PROFILE_LABELS[riskProfile]
 
-  function startScan() { setStep('scan') }
+  // Every new scan invalidates any prior AI commentary — it described the
+  // previous shortlist, and letting it linger next to fresh picks is a lie.
+  function startScan() { setAiAnalysis(null); setStep('scan') }
 
   // If scanning, show progress even while funds load
   if (step === 'scan' && (!schemes || schemes.length === 0)) {
@@ -280,6 +282,12 @@ export default function BankerPage() {
                     </button>
                   )}
                 </div>
+              )}
+              {!hasEnvKey() && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Stored in this browser's local storage in plain text — anyone with device or script access to this
+                  site can read it. Use a key you're comfortable exposing client-side, and remove it when done.
+                </p>
               )}
               {keySaved && (
                 <p className="text-xs text-primary mt-1">API key saved — AI analysis runs after scan</p>
@@ -487,7 +495,7 @@ export default function BankerPage() {
               {topPicks.length > 0 && (
                 <div className="text-center pt-1">
                   <button
-                    onClick={() => setRescanKey(k => k + 1)}
+                    onClick={() => { setAiAnalysis(null); setRescanKey(k => k + 1) }}
                     className="px-6 py-2 rounded-md border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-[var(--border-strong)] transition-colors duration-150 cursor-pointer"
                   >
                     ↻ Re-scan

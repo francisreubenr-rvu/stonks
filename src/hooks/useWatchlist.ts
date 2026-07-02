@@ -35,16 +35,18 @@ export function useWatchlist() {
     })
   }, [])
 
-  const remove = useCallback((symbol: string) => {
+  // Keyed on symbol+type, matching add()'s dedupe key — a stock and an
+  // index/fund can share a ticker, and must not collide on remove/has.
+  const remove = useCallback((symbol: string, type: WatchlistItem['type']) => {
     setItems(prev => {
-      const next = prev.filter(i => i.symbol !== symbol)
+      const next = prev.filter(i => !(i.symbol === symbol && i.type === type))
       save(next)
       return next
     })
   }, [])
 
   const has = useCallback(
-    (symbol: string) => items.some(i => i.symbol === symbol),
+    (symbol: string, type: WatchlistItem['type']) => items.some(i => i.symbol === symbol && i.type === type),
     [items],
   )
 

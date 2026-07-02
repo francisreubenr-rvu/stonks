@@ -10,11 +10,13 @@ import { SectionEyebrow } from '@/components/SectionEyebrow'
 
 const PAGE_SIZE = 50
 
+// 'Popularity' and '1Y Return' were removed — LightFund carries no
+// popularity/return data to sort by (that lives behind a per-fund NAV
+// fetch on FundDetailPage), so those options previously highlighted as
+// "selected" while silently leaving the list in natural order.
 const SORT_OPTIONS = [
-  { key: 'popularity', label: 'Popularity' },
-  { key: 'ret_desc', label: '1Y Return' },
-  { key: 'risk_asc', label: 'Risk (Low first)' },
   { key: 'name_asc', label: 'Name A–Z' },
+  { key: 'risk_asc', label: 'Risk (Low first)' },
 ] as const
 type SortKey = typeof SORT_OPTIONS[number]['key']
 
@@ -60,9 +62,9 @@ export default function FundsPage() {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [sort, setSort] = useState<SortKey>('popularity')
+  const [sort, setSort] = useState<SortKey>('name_asc')
   const [filters, setFilters] = useState<FundFilters>({
-    categories: [], riskLevels: [], fundHouse: '', minReturns1y: 0, minAum: 0,
+    categories: [], riskLevels: [], fundHouse: '',
   })
 
   const debouncedQuery = useDebounce(query, 200)
@@ -108,9 +110,7 @@ export default function FundsPage() {
     }
 
     if (sort === 'risk_asc') result = [...result].sort((a, b) => a.r - b.r)
-    else if (sort === 'name_asc') result = [...result].sort((a, b) => a.n.localeCompare(b.n))
-    // 'ret_desc' has no data on LightFund (no NAV/return here) — falls back to
-    // natural order, same as 'popularity'; return-based sort lives on FundDetail.
+    else result = [...result].sort((a, b) => a.n.localeCompare(b.n))
 
     return result
   }, [schemes, debouncedQuery, filters, sort])

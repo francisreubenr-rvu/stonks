@@ -5,8 +5,10 @@ export interface Quote {
   change: number
   changePct: number
   volume: number
-  marketCap: number
-  pe: number
+  // NSE's public endpoints don't expose these — null, not a fabricated 0,
+  // when unavailable on both the live and fallback-snapshot paths.
+  marketCap: number | null
+  pe: number | null
   exchange: 'NSE' | 'BSE'
 }
 
@@ -29,13 +31,15 @@ export interface EodBar {
 
 export interface Fundamentals {
   symbol: string
-  pe: number
-  pb: number
-  eps: number
-  roe: number
-  debtToEquity: number
-  dividendYield: number
-  marketCap: number
+  pe: number | null
+  // NSE's public quote-equity endpoint does not expose these — always null
+  // until a real source is wired up. Never fabricate a zero for them.
+  pb: number | null
+  eps: number | null
+  roe: number | null
+  debtToEquity: number | null
+  dividendYield: number | null
+  marketCap: number | null
   sector: string
   industry: string
 }
@@ -156,4 +160,7 @@ export interface PortfolioItem extends Holding {
   pnlPct: number
   dayChange: number
   dayChangePct: number
+  // true when no live quote resolved and currentPrice/value/pnl are just the
+  // buy price carried forward — NOT a real "flat day", just missing data.
+  priceUnavailable: boolean
 }

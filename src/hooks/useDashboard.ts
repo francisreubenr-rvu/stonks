@@ -16,6 +16,10 @@ export function useDashboard() {
     const sectorIndices = indices.filter(i =>
       i.symbol.includes('NIFTY') && !BROAD.has(i.symbol)
     )
+    // "gainers"/"losers"/"advanceDecline" below are derived from sector
+    // INDICES (NIFTY IT, NIFTY PHARMA, ...), not individual stocks — the app
+    // does not fetch a real per-stock movers/breadth feed. Labeled honestly
+    // as "Sector Leaders/Laggards" and "Sector Breadth" in DashboardPage.
 
     const sectors: SectorPerformance[] = sectorIndices.map(i => ({
       name: i.name.replace('Nifty ', ''),

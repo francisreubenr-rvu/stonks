@@ -99,6 +99,8 @@ VITE_DEEPSEEK_KEY=sk-...
 
 The key stays client-side and is only sent to DeepSeek when you click **Run AI Analysis**.
 
+> **Warning:** Vite inlines every `VITE_`-prefixed variable into the built JS bundle — if you build and *publish* the app with `VITE_DEEPSEEK_KEY` set, the key is readable by every visitor. Use it for local dev only; on a shared deployment, enter the key in the UI instead (stored in your own browser's localStorage).
+
 ---
 
 ## 📜 Scripts

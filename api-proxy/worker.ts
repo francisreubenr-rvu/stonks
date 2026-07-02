@@ -25,12 +25,24 @@ const ALLOWED_PATHS = [
   '/historical/cm/equity',
 ]
 
-// Rate limiter: 120 req/min per IP
+// Best-effort rate limiter: ~120 req/min per IP, PER ISOLATE. The map is
+// module-global, so it resets on cold start and is not shared across
+// concurrent isolates — with N isolates the effective cap is ~120×N/min.
+// Real cross-isolate limiting needs Cloudflare's rate-limiting binding or a
+// Durable Object; this is a cheap abuse dampener, not a guarantee.
 const rateLimit = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT_MAX_ENTRIES = 10_000
 
 function checkRateLimit(req: Request): boolean {
   const ip = req.headers.get('CF-Connecting-IP') ?? 'unknown'
   const now = Date.now()
+  // Sweep expired entries once the map grows large, so a long-lived isolate
+  // doesn't accumulate stale IPs without bound.
+  if (rateLimit.size > RATE_LIMIT_MAX_ENTRIES) {
+    for (const [k, v] of rateLimit) {
+      if (now > v.resetAt) rateLimit.delete(k)
+    }
+  }
   const entry = rateLimit.get(ip)
   if (!entry || now > entry.resetAt) {
     rateLimit.set(ip, { count: 1, resetAt: now + 60_000 })
@@ -111,6 +123,17 @@ export default {
       })
     }
 
+    // Enforce the origin allowlist on the data path too, not just preflight.
+    // Browser requests always carry Origin for cross-origin fetches; a
+    // request with a disallowed Origin gets rejected outright instead of
+    // being served with a mismatched ACAO header. (Origin-less requests —
+    // curl, server-to-server — are allowed through: the CORS header is
+    // meaningless to them and blocking empty Origin would break nothing
+    // for abusers while breaking legitimate tooling.)
+    if (origin !== '' && !ALLOWED_ORIGINS.includes(origin)) {
+      return new Response('Forbidden origin', { status: 403 })
+    }
+
     if (!checkRateLimit(request)) {
       return new Response('Rate limit exceeded', { status: 429, headers: corsHeaders(origin) })
     }
@@ -121,7 +144,9 @@ export default {
     }
 
     const apiPath = url.pathname.slice(PROXY_PREFIX.length) // e.g. "/allIndices"
-    if (!ALLOWED_PATHS.some(p => apiPath === p || apiPath.startsWith(p))) {
+    // Exact match or a slash-delimited subpath — bare startsWith would let
+    // "/allIndices-anything" ride through on the "/allIndices" allowance.
+    if (!ALLOWED_PATHS.some(p => apiPath === p || apiPath.startsWith(`${p}/`))) {
       return new Response('Unauthorized path', { status: 403, headers: corsHeaders(origin) })
     }
 

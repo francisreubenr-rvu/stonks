@@ -164,7 +164,9 @@ async function refreshStocks() {
     if (!b || !isFinite(b.close) || !b.close) { dropped.push(`${s} (no EOD row)`); continue }
     const change = +(b.close - b.prev).toFixed(2)
     const pct = b.prev ? +(change / b.prev * 100).toFixed(2) : 0
-    stocks.push({ symbol: s, name: names.get(s), price: +b.close.toFixed(2), change, changePct: pct, volume: b.vol, pe: 0, marketCap: 0 })
+    // NSE's bhavcopy EOD file has no P/E or market cap columns — leave them
+    // null rather than writing a fake 0 into the fallback snapshot.
+    stocks.push({ symbol: s, name: names.get(s), price: +b.close.toFixed(2), change, changePct: pct, volume: b.vol, pe: null, marketCap: null })
     const priceStr = b.close.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     const up = pct >= 0
     ticker.push(`['${s}','${priceStr}','${up ? '+' : ''}${pct.toFixed(2)}%',${up}]`)

@@ -18,8 +18,8 @@ export default function RootLayout() {
   const location = useLocation()
   return (
     <div className="min-h-dvh bg-background flex flex-col">
-      <header className="sticky top-0 z-10 bg-[var(--color-card)] border-b border-border" style={{ height: 48 }}>
-        <div className="max-w-[1200px] mx-auto px-6 flex items-center h-full gap-3">
+      <header className="sticky top-0 z-10 bg-[var(--color-card)] border-b border-border">
+        <div className="max-w-[1200px] mx-auto px-6 flex items-center h-12 gap-3">
           <NavLink to="/dashboard" className="flex items-center pr-4 shrink-0 border-r border-border">
             <span className="text-sm font-semibold text-foreground tracking-tight select-none">stonks</span>
           </NavLink>
@@ -58,6 +58,11 @@ export default function RootLayout() {
             </svg>
           </NavLink>
           <SearchBar className="shrink-0 hidden md:block" />
+        </div>
+        {/* Mobile search row — below md the inline search is hidden, and
+            without this, mobile users would have no search at all. */}
+        <div className="md:hidden border-t border-border bg-[var(--color-card)] px-6 py-2">
+          <SearchBar className="w-full [&>input]:w-full" />
         </div>
       </header>
 

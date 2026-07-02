@@ -7,7 +7,7 @@ export function useFundDetail(schemeCode: string) {
     queryKey: ['fundDetail', schemeCode],
     queryFn: async () => {
       const detail = await fetchFundDetail(schemeCode)
-      const stats = computeStats(detail.data)
+      const stats = computeStats(detail.data) // null when the scheme has no valid NAV history
       return { detail, stats }
     },
     enabled: !!schemeCode,

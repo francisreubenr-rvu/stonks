@@ -113,7 +113,10 @@ export default function DashboardPage() {
         <div className="border border-border rounded-lg bg-card">
           <div className="px-5 py-3 border-b border-border">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-              Market Breadth
+              Sector Breadth
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Sector indices up vs. down — not stock-level market breadth
             </p>
           </div>
           <div className="p-5 space-y-4">
@@ -200,7 +203,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-b border-border">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest"
                     style={{ color: 'var(--delta-positive)' }}>
-                    Top Gainers
+                    Sector Leaders
                   </p>
                 </div>
                 <div className="divide-y divide-border">
@@ -223,7 +226,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-b border-border">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest"
                     style={{ color: 'var(--delta-negative)' }}>
-                    Top Losers
+                    Sector Laggards
                   </p>
                 </div>
                 <div className="divide-y divide-border">

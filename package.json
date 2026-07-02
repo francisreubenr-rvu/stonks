@@ -9,6 +9,7 @@
     "refresh-data": "node scripts/refresh-data.mjs",
     "build": "tsc --noEmit && vite build",
     "lint": "oxlint",
+    "test": "vitest run",
     "preview": "vite preview",
     "predeploy": "npm run refresh-data && npm run build",
     "deploy": "gh-pages -d dist"
@@ -36,6 +37,7 @@
     "oxlint": "^1.69.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
+    "vitest": "^4.1.9",
     "wrangler": "^4.105.0"
   }
 }

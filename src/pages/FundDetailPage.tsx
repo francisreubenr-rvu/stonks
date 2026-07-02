@@ -1,11 +1,11 @@
 import React from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { useFundDetail } from '@/hooks/useFundDetail'
 import { useSxEffects } from '@/hooks/useSxEffects'
 import { riskFromCategory } from '@/lib/riskFromCategory'
 import { computeYearlyReturns } from '@/lib/fundStats'
-import { fetchAllSchemes } from '@/api/mfapiClient'
+import { cat, useFundList } from '@/hooks/useFundList'
+import { WatchlistToggle } from '@/components/WatchlistToggle'
 import NavChart from '@/components/NavChart'
 
 const RISK_STYLE: Record<string, React.CSSProperties> = {
@@ -161,11 +161,9 @@ export default function FundDetailPage() {
   const { schemeCode } = useParams<{ schemeCode: string }>()
   const navigate = useNavigate()
   const { data: queryData, isLoading, error, refetch, isFetching } = useFundDetail(schemeCode ?? '')
-  const { data: allSchemes } = useQuery({
-    queryKey: ['allSchemes'],
-    queryFn: fetchAllSchemes,
-    staleTime: 3_600_000,
-  })
+  // Reuse the screener's IndexedDB-cached, AMFI-pruned fund list for the peer
+  // widget instead of re-downloading MFAPI's full multi-MB scheme dump.
+  const { data: allFunds } = useFundList()
   const rootRef = useSxEffects<HTMLDivElement>([isLoading])
 
   if (isLoading) return <LoadingSkeleton />
@@ -197,6 +195,22 @@ export default function FundDetailPage() {
 
   const { detail, stats } = queryData
   const { meta, data } = detail
+
+  if (!stats) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-foreground font-medium">{meta.scheme_name}</p>
+        <p className="text-sm text-muted-foreground">
+          No usable NAV history is available for this scheme — it may be newly launched or have gaps in its
+          reported data. Statistics can't be computed.
+        </p>
+        <button onClick={() => navigate(-1)} className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer">
+          ← Go back
+        </button>
+      </div>
+    )
+  }
+
   const risk = riskFromCategory(meta.scheme_category)
   const isPos = (stats.cagr1y ?? 0) >= 0
 
@@ -219,6 +233,7 @@ export default function FundDetailPage() {
             <span className="text-[11px] text-muted-foreground border border-border px-2.5 py-1 rounded-full bg-muted">
               {meta.scheme_category}
             </span>
+            <WatchlistToggle symbol={String(meta.scheme_code)} name={meta.scheme_name} type="fund" />
           </div>
         </div>
         <div className="flex items-baseline gap-3 flex-wrap pt-1">
@@ -443,25 +458,29 @@ export default function FundDetailPage() {
       })()}
 
       {/* Peer Comparison */}
-      {allSchemes && allSchemes.length > 0 && (() => {
-        const category = meta.scheme_category
-        const peers = allSchemes
-          .filter(s => s.schemeCode !== meta.scheme_code && s.schemeName.toLowerCase().includes(category.toLowerCase()))
+      {allFunds && allFunds.length > 0 && (() => {
+        // Peers come from the screener's cached LightFund list (already
+        // categorized via cat() at enrich time). There's no quality/return
+        // ranking here, so this is a plain alphabetical listing, not a "Top N".
+        const category = cat(meta.scheme_name)
+        const peers = allFunds
+          .filter(f => f.c !== meta.scheme_code && f.g === category)
+          .sort((a, b) => a.n.localeCompare(b.n))
           .slice(0, 5)
         if (peers.length === 0) return null
         return (
           <div className="border border-border rounded-lg bg-card">
             <div className="px-5 py-3 border-b border-border">
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Top {peers.length} in {category}</p>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Other {category} funds</p>
             </div>
             <div className="px-5 py-3 space-y-1.5">
               {peers.map(p => (
                 <Link
-                  key={p.schemeCode}
-                  to={`/fund/${p.schemeCode}`}
+                  key={p.c}
+                  to={`/fund/${p.c}`}
                   className="block text-[12px] text-muted-foreground hover:text-foreground transition-colors truncate"
                 >
-                  {p.schemeName}
+                  {p.n}
                 </Link>
               ))}
             </div>

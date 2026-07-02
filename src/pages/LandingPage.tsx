@@ -416,7 +416,10 @@ export default function LandingPage() {
             <h2 style={{ fontSize: 'clamp(28px,3.6vw,42px)', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Every index, drawn live</h2>
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#64748B', fontSize: 13, fontFamily: MONO }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} /> updated just now
+            {/* No hardcoded freshness claim: fetchIndices silently falls back
+                to a static snapshot when the live feed is blocked, so
+                "updated just now" could sit over hours-old data. */}
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: ACCENT }} /> latest available data
           </div>
         </div>
         <div className="lp-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>

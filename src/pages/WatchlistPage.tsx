@@ -76,7 +76,7 @@ export default function WatchlistPage() {
                 {quote ? `${pos ? '+' : ''}${quote.changePct.toFixed(2)}%` : '—'}
               </span>
               <button
-                onClick={() => remove(item.symbol)}
+                onClick={() => remove(item.symbol, item.type)}
                 className="text-[11px] text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-right pr-2 self-center"
               >
                 ✕

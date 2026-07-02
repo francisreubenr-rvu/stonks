@@ -7,8 +7,9 @@ export function DeltaBadge({ pct, positive, className = '' }: { pct: string; pos
         background: positive ? 'var(--delta-positive-bg)' : 'var(--delta-negative-bg)',
         color: positive ? 'var(--delta-positive)' : 'var(--delta-negative)',
       }}
+      aria-label={`${positive ? 'up' : 'down'} ${pct}`}
     >
-      {positive ? '▲' : '▼'} {pct}
+      <span aria-hidden="true">{positive ? '▲' : '▼'}</span> {pct}
     </span>
   )
 }

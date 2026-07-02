@@ -1,13 +1,18 @@
 import { useEffect, useRef, type RefObject } from 'react'
 
 function fmt(val: number, dec: number, comma: boolean, prefix: string, suffix: string) {
-  let str = val.toFixed(dec)
+  // Format the absolute value and re-prepend the sign: round-tripping the
+  // integer part through Number() would drop the sign of "-0" (any negative
+  // value between -1 and 0 mid-animation) and render the wrong sign.
+  const sign = val < 0 ? '-' : ''
+  const abs = Math.abs(val)
+  let str = abs.toFixed(dec)
   if (comma) {
     const parts = str.split('.')
     parts[0] = Number(parts[0]).toLocaleString('en-IN')
     str = parts.join('.')
   }
-  return prefix + str + suffix
+  return prefix + sign + str + suffix
 }
 
 /**

@@ -37,6 +37,7 @@ export default function PortfolioPage() {
   const portfolio = useMemo<PortfolioItem[]>(() => {
     return holdings.map(h => {
       const q = quotes?.find(q => q.symbol === h.symbol)
+      const priceUnavailable = !q
       const currentPrice = q?.price ?? h.buyPrice
       const currentValue = currentPrice * h.quantity
       const invested = h.buyPrice * h.quantity
@@ -54,15 +55,22 @@ export default function PortfolioPage() {
         pnlPct,
         dayChange,
         dayChangePct,
+        priceUnavailable,
       }
     })
   }, [holdings, quotes])
 
-  const totals = useMemo(() => ({
-    invested: portfolio.reduce((s, i) => s + i.invested, 0),
-    current: portfolio.reduce((s, i) => s + i.currentValue, 0),
-    dayChange: portfolio.reduce((s, i) => s + i.dayChange, 0),
-  }), [portfolio])
+  // Totals only fold in holdings with a resolved live quote — a holding whose
+  // quote failed to load must not silently contribute a fake "flat" P&L/value.
+  const totals = useMemo(() => {
+    const priced = portfolio.filter(i => !i.priceUnavailable)
+    return {
+      invested: priced.reduce((s, i) => s + i.invested, 0),
+      current: priced.reduce((s, i) => s + i.currentValue, 0),
+      dayChange: priced.reduce((s, i) => s + i.dayChange, 0),
+      unpriced: portfolio.length - priced.length,
+    }
+  }, [portfolio])
 
   const totalPnl = totals.current - totals.invested
   const totalPnlPct = totals.invested > 0 ? (totalPnl / totals.invested) * 100 : 0
@@ -76,8 +84,10 @@ export default function PortfolioPage() {
     setShowForm(false)
   }
 
-  function removeHolding(symbol: string) {
-    const next = holdings.filter(h => h.symbol !== symbol)
+  function removeHolding(index: number) {
+    // Index-based, not symbol-based: two holdings can share a symbol (e.g.
+    // separate buy lots), and a symbol match would previously delete all of them.
+    const next = holdings.filter((_, i) => i !== index)
     saveHoldings(next)
     setHoldings(next)
   }
@@ -181,6 +191,12 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      {totals.unpriced > 0 && (
+        <p data-reveal className="text-xs text-muted-foreground mb-4">
+          {totals.unpriced} holding{totals.unpriced > 1 ? 's' : ''} excluded from totals above — live quote unavailable.
+        </p>
+      )}
+
       <div data-reveal className="border border-border rounded-md overflow-hidden bg-card">
         <div className="overflow-x-auto">
         <div className="min-w-[640px]">
@@ -193,11 +209,11 @@ export default function PortfolioPage() {
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide text-right">P&L</span>
           <span />
         </div>
-        {portfolio.map(item => {
+        {portfolio.map((item, index) => {
           const itemPos = item.pnl >= 0
           return (
             <div
-              key={item.symbol}
+              key={`${item.symbol}-${item.buyDate}-${index}`}
               className="grid grid-cols-[1fr_80px_100px_100px_100px_100px_40px] px-4 py-3 border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
             >
               <button
@@ -211,17 +227,32 @@ export default function PortfolioPage() {
               </button>
               <span className="text-right font-mono text-[13px] text-foreground tabular-nums self-center">{item.quantity}</span>
               <span className="text-right font-mono text-[13px] text-muted-foreground tabular-nums self-center">₹{item.buyPrice.toFixed(2)}</span>
-              <span className="text-right font-mono text-[13px] text-foreground tabular-nums self-center">₹{item.currentPrice.toFixed(2)}</span>
-              <span className="text-right font-mono text-[13px] text-foreground tabular-nums self-center">₹{item.currentValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-              <span
-                className="text-right font-mono text-[12px] tabular-nums self-center"
-                style={{ color: itemPos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
-              >
-                {itemPos ? '+' : ''}₹{item.pnl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                <span className="block text-[10px] opacity-75">{itemPos ? '+' : ''}{item.pnlPct.toFixed(1)}%</span>
-              </span>
+              {item.priceUnavailable ? (
+                <span className="text-right font-mono text-[13px] text-muted-foreground tabular-nums self-center" title="Live quote unavailable">—</span>
+              ) : (
+                <span className="text-right font-mono text-[13px] text-foreground tabular-nums self-center">₹{item.currentPrice.toFixed(2)}</span>
+              )}
+              {item.priceUnavailable ? (
+                <span className="text-right font-mono text-[13px] text-muted-foreground tabular-nums self-center">—</span>
+              ) : (
+                <span className="text-right font-mono text-[13px] text-foreground tabular-nums self-center">₹{item.currentValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+              )}
+              {item.priceUnavailable ? (
+                <span className="text-right font-mono text-[12px] text-muted-foreground tabular-nums self-center">
+                  —
+                  <span className="block text-[10px] opacity-75">no quote</span>
+                </span>
+              ) : (
+                <span
+                  className="text-right font-mono text-[12px] tabular-nums self-center"
+                  style={{ color: itemPos ? 'var(--delta-positive)' : 'var(--delta-negative)' }}
+                >
+                  {itemPos ? '+' : ''}₹{item.pnl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  <span className="block text-[10px] opacity-75">{itemPos ? '+' : ''}{item.pnlPct.toFixed(1)}%</span>
+                </span>
+              )}
               <button
-                onClick={() => removeHolding(item.symbol)}
+                onClick={() => removeHolding(index)}
                 className="text-[11px] text-muted-foreground hover:text-destructive transition-colors cursor-pointer text-right pr-1 self-center"
               >
                 ✕

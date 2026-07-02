@@ -13,13 +13,13 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
     try {
       return await fn()
     } catch (e: any) {
-      if (e?.message?.includes('429') || e?.message?.includes('rate')) {
-        throw e
-      }
+      // Retrying into a rate limit only makes it worse — surface it immediately.
+      if (e?.message?.includes('429') || e?.message?.includes('rate')) throw e
       if (i === retries) throw e
       await delay(1000)
     }
   }
+  // Unreachable: the loop above always either returns or throws by i === retries.
   throw new Error('All retries exhausted')
 }
 
@@ -42,13 +42,15 @@ export async function fetchQuoteWithFallback(symbol: string): Promise<Quote> {
   try {
     return await withRetry(() => nseQuote(symbol))
   } catch (e: any) {
-    if (e?.message?.includes('429') || e?.message?.includes('rate')) {
-      const cleanSymbol = symbol.replace(/\..*$/, '')
-      const fallback = await loadFallbackCache().then(all =>
-        all.find(q => q.symbol === cleanSymbol)
-      )
-      if (fallback) return { ...fallback, exchange: 'NSE', marketCap: fallback.marketCap ?? 0 }
-    }
+    // Fall back on ANY failure (rate limit, Akamai 401/403, timeout, 502 from
+    // the proxy) — the most common real-world failure is NSE's edge blocking
+    // the request, not a detected "429"/"rate" string, and a good static
+    // snapshot exists either way.
+    const cleanSymbol = symbol.replace(/\..*$/, '').toUpperCase()
+    const fallback = await loadFallbackCache().then(all =>
+      all.find(q => q.symbol === cleanSymbol)
+    )
+    if (fallback) return { ...fallback, exchange: 'NSE', marketCap: fallback.marketCap ?? null }
     throw e
   }
 }
@@ -70,10 +72,24 @@ export async function fetchEodBarsWithFallback(symbol: string, range = '1mo', _i
 }
 
 export async function fetchMultipleWithFallback(symbols: string[]): Promise<Quote[]> {
+  // nseMultiple (fetchMultipleQuotes) uses Promise.allSettled internally and
+  // never rejects — a total NSE outage resolves to [], not a thrown error —
+  // so a try/catch around it alone never reaches a fallback. Compare against
+  // what we asked for and backfill anything missing from the static snapshot.
+  const wanted = symbols.map(s => s.replace(/\..*$/, '').toUpperCase())
+  let live: Quote[] = []
   try {
-    return await withRetry(() => nseMultiple(symbols))
+    live = await withRetry(() => nseMultiple(symbols))
   } catch {
-    const all = await loadFallbackCache()
-    return all.filter(q => symbols.includes(q.symbol))
+    live = []
   }
+
+  const resolved = new Set(live.map(q => q.symbol))
+  const missing = wanted.filter(s => !resolved.has(s))
+  if (missing.length === 0) return live
+
+  const all = await loadFallbackCache()
+  const missingSet = new Set(missing)
+  const backfilled = all.filter(q => missingSet.has(q.symbol))
+  return [...live, ...backfilled]
 }

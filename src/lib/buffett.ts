@@ -73,7 +73,7 @@ export function buffettScore(fund: LightFund, stats: FundStats | null, _profile:
   if (AVOID.includes(fund.g)) { score -= 20; reasons.push('Avoids this category — outside circle of competence') }
   if (FAVOR.includes(fund.g)) { score += 10; reasons.push('Favored category — understandable, durable businesses') }
 
-  score += RISK_BONUS[fund.r]
+  score += RISK_BONUS[fund.r] ?? 0
   if (fund.r === 3) reasons.push('Excessive risk — Buffett avoids speculative bets')
 
   if (stats) {
@@ -112,8 +112,10 @@ export function buffettScore(fund: LightFund, stats: FundStats | null, _profile:
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  PROPRIETARY STONKS SCORE™ — tie-breaking composite formula
-//  Eliminates duplicate scores by factoring micro-differentiators
+//  Tie-breaking composite: buffettScore() only returns an integer,
+//  so ties are common. This adds a fractional nudge (< 1.0, never
+//  changes the integer part) from stats-based micro-differentiators
+//  so the sort order is stable and reproducible.
 // ═══════════════════════════════════════════════════════════════
 
 export function stonksScore(
@@ -164,13 +166,12 @@ export function stonksScore(
     if (range < 0.15) tie += 0.05
   }
 
-  // Fund house reputation (treat long names as proxy for established houses)
-  if (fund.h.length > 6) tie += 0.02
-
   // Direct plan preference
   if (fund.n.toLowerCase().includes('direct')) tie += 0.03
 
-  return base + tie
+  // Cap at 100 here rather than trusting every render site to clamp — the
+  // tiebreaker can push a base-100 fund past the advertised 0-100 scale.
+  return Math.min(100, base + tie)
 }
 
 export function oracleWisdom(profile: InvestmentProfile): string[] {
@@ -178,9 +179,11 @@ export function oracleWisdom(profile: InvestmentProfile): string[] {
   if (profile.horizon === '<1Y') w.push('Mr. Buffett would say: "If you are not willing to own something for ten years, do not own it for ten minutes."')
   if (profile.horizon === '10Y+') w.push('Mr. Buffett approves. "Time is the friend of the wonderful business."')
   if (profile.fundCount > 8) w.push('"Diversification is protection against ignorance." Consider 3-5 great funds.')
-  if (profile.fundCount <= 3) w.push('"Put all your eggs in one basket — and watch that basket carefully."')
-  if (profile.frequency === 'Monthly SIP') w.push('The Oracle smiles upon your discipline. Regular investing is the patient investor\'s ally.')
-  if (profile.amount === '10L+') w.push('"The first rule is don\'t lose money." Capital preservation matters.')
+  if (profile.fundCount <= 3) w.push('"Wide diversification is only required when investors do not understand what they are doing." A focused, well-understood portfolio is fine — for those who\'ve done the homework.')
+  // Values must match BankerPage's actual inputs: frequency is one of
+  // Monthly/Quarterly/Yearly/Lumpsum, amount is a free-text numeric string.
+  if (profile.frequency === 'Monthly' || profile.frequency === 'Quarterly') w.push('The Oracle smiles upon your discipline. Regular investing is the patient investor\'s ally.')
+  if (Number(profile.amount) >= 1_000_000) w.push('"The first rule is don\'t lose money." Capital preservation matters.')
   return w
 }
 

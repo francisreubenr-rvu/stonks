@@ -3,7 +3,10 @@ const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
 let cachedKey: string | null = null
 
 export function getApiKey(): string | null {
-  // 1. Vite env var (set once in .env.local)
+  // 1. Vite env var (set once in .env.local).
+  //    WARNING: any VITE_-prefixed var is inlined into the shipped JS bundle
+  //    at build time — every visitor can read it. Only use this for local
+  //    dev or a personal deployment where you accept the key being public.
   if (import.meta.env.VITE_DEEPSEEK_KEY) {
     return import.meta.env.VITE_DEEPSEEK_KEY
   }
