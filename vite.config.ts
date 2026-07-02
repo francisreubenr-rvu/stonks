@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 const NSE_ORIGIN = 'https://www.nseindia.com'
 const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -29,7 +31,7 @@ async function ensureNseCookie(): Promise<void> {
 
 export default defineConfig({
   base: './',
-  plugins: [tailwindcss(), react()],
+  plugins: [tailwindcss(), react(), cloudflare()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },

@@ -31,3 +31,9 @@ dist-ssr
 
 # Kilo Code local tool dir
 .kilo/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
